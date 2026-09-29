@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f0">
+  <meta name="description" content="FieldLink connects agriculture with mobile data, trusted services, and timely insight.">
+  <title>AgriConnect| Agriculture, connected</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#overview" aria-label="AgriConnect home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>agri<span class="brand-light">connect</span></span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="primary-nav">
+        <a class="nav-link active" href="#overview"><span class="nav-icon">⌂</span>Overview</a>
+        <a class="nav-link" href="#bundles"><span class="nav-icon">◫</span>Data bundles</a>
+        <a class="nav-link" href="#weather"><span class="nav-icon">◌</span>Weather intelligence<span class="nav-lock" data-feature="weather">⌑</span></a>
+        <a class="nav-link" href="#assistant"><span class="nav-icon">✳</span>Farm assistant<span class="nav-lock" data-feature="assistant">⌑</span></a>
+        <a class="nav-link" href="#learning"><span class="nav-icon">▤</span>Learning hub<span class="nav-lock" data-feature="learning">⌑</span></a>
+        <a class="nav-link" href="#rewards"><span class="nav-icon">◇</span>Loyalty rewards<span class="nav-lock" data-feature="rewards">⌑</span></a>
+        <a class="nav-link" href="#wallet"><span class="nav-icon">▣</span>Digital wallet</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="plan-mini-label">YOUR PLAN</div>
+        <div class="plan-mini"><span class="plan-dot"></span><span id="sidebar-plan">Premium plan</span><button class="icon-button" id="manage-plan" aria-label="Choose a subscription plan" title="Choose a subscription plan">↗</button></div>
+        <div class="sidebar-help"><span class="help-avatar">?</span><span><strong>Need a hand?</strong><small>Talk to our support team</small></span><span class="help-arrow">›</span></div>
+        <div class="profile-row"><div class="profile-avatar">LS</div><div><strong>Lindokuhle S.</strong><small id="profile-role">Farm manager</small></div><button class="profile-menu" aria-label="Profile options">···</button></div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="overview">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><strong>Overview</strong></div>
+        <div class="top-actions">
+          <label class="role-picker"><span class="sr-only">View as</span><select id="role-select" aria-label="Choose workspace role"><option value="farmer">Farmer view</option><option value="supplier">Supplier view</option><option value="buyer">Buyer view</option><option value="admin">Company admin</option></select><span class="select-chevron">⌄</span></label>
+          <button class="top-icon" aria-label="Notifications" title="Notifications"><span>♧</span><i></i></button>
+          <button class="top-icon user-top" aria-label="Account">JM</button>
+        </div>
+      </header>
+
+      <div class="page-wrap">
+        <section class="welcome-row">
+          <div><p class="eyebrow"><span class="eyebrow-dot"></span>MONDAY, 18 AUGUST 2025 <span class="eyebrow-separator">/</span> KUMASI, GHANA</p><h1 id="welcome-title">Good morning, Jordan <span class="wave">↗</span></h1><p class="welcome-subtitle" id="welcome-subtitle">Your farm's next good decision starts here.</p></div>
+          <button class="button button-dark" data-scroll="#bundles"><span>＋</span> Explore bundles</button>
+        </section>
+
+        <section class="hero-banner" aria-label="Seasonal insight">
+          <div class="hero-image"></div>
+          <div class="hero-shade"></div>
+          <div class="hero-content"><span class="hero-kicker"><span class="live-dot"></span>SEASONAL BRIEFING <span>·</span> 3 MIN READ</span><h2>Grow smarter.<br>Go further.</h2><p>Small, timely decisions can make a big difference this growing season.</p><button class="hero-link" data-scroll="#assistant">Get a field recommendation <span>↗</span></button></div>
+          <div class="hero-caption"><span class="caption-line"></span> A field outside Kumasi <span>·</span> Ashanti Region</div>
+        </section>
+
+        <section class="metric-grid" aria-label="Account summary">
+          <article class="metric-card data-metric"><div class="metric-top"><span>DATA BALANCE</span><span class="metric-icon">◫</span></div><div class="metric-value"><strong id="data-balance">4.8</strong><span>GB</span></div><div class="metric-foot"><span class="usage-track"><i></i></span><span>4.8 GB of 10 GB</span></div></article>
+          <article class="metric-card wallet-metric"><div class="metric-top"><span>WALLET BALANCE</span><span class="metric-icon">▣</span></div><div class="metric-value"><span class="currency">GH₵</span><strong id="wallet-balance">248.50</strong></div><button class="metric-action" data-scroll="#wallet">Manage wallet <span>↗</span></button></article>
+          <article class="metric-card points-metric"><div class="metric-top"><span>FIELD POINTS</span><span class="metric-icon">◇</span></div><div class="metric-value"><strong>1,240</strong><span class="points-label">pts</span></div><div class="metric-foot"><span class="points-badge">+120 this month</span><span>Gold level</span></div></article>
+          <article class="metric-card season-metric"><div class="metric-top"><span>SEASON PROGRESS</span><span class="metric-icon">↗</span></div><div class="season-progress"><strong>Week 08</strong><span>of 16</span></div><div class="season-track"><i></i></div><div class="metric-foot"><span>Mid-season check-in</span><span>50%</span></div></article>
+        </section>
+
+        <section class="content-grid">
+          <div class="main-column">
+            <section class="section-block bundle-section" id="bundles">
+              <div class="section-heading"><div><p class="eyebrow section-eyebrow">STAY CONNECTED</p><h2>Bundles for your day</h2></div><a href="#bundle-list" class="text-link">View all bundles <span>↗</span></a></div>
+              <div class="bundle-toolbar"><div class="filter-tabs" role="tablist" aria-label="Filter bundles"><button class="filter-tab selected" data-filter="all" role="tab" aria-selected="true">All bundles</button><button class="filter-tab" data-filter="data" role="tab" aria-selected="false">Data</button><button class="filter-tab" data-filter="voice" role="tab" aria-selected="false">Voice & SMS</button></div><span class="bundle-region"><span>◉</span> Ghana <span class="chev">⌄</span></span></div>
+              <div class="bundle-grid" id="bundle-list">
+                <article class="bundle-card" data-category="data"><div class="bundle-visual visual-sun"><span class="visual-label">BEST FOR THE FIELD</span><span class="visual-orbit orbit-one"></span><span class="visual-orbit orbit-two"></span><span class="visual-symbol">4G</span><span class="visual-spark">✳</span></div><div class="bundle-info"><div class="bundle-name"><div><h3>Field Day</h3><p>Reliable data for everyday farm work</p></div><span class="bundle-tag">POPULAR</span></div><div class="bundle-spec"><strong>5 GB</strong><span>30 days</span><span class="spec-divider"></span><strong>GH₵ 25</strong></div><button class="button button-outline buy-bundle" data-name="Field Day" data-price="25">Get bundle <span>↗</span></button></div></article>
+                <article class="bundle-card" data-category="data"><div class="bundle-visual visual-leaf"><span class="visual-label">MORE ROOM TO GROW</span><span class="leaf-shape leaf-a"></span><span class="leaf-shape leaf-b"></span><span class="visual-symbol">12<span>GB</span></span><span class="visual-spark">✳</span></div><div class="bundle-info"><div class="bundle-name"><div><h3>Market Runner</h3><p>For calls, listings and market days</p></div><span class="bundle-tag green-tag">GREAT VALUE</span></div><div class="bundle-spec"><strong>12 GB</strong><span>30 days</span><span class="spec-divider"></span><strong>GH₵ 50</strong></div><button class="button button-outline buy-bundle" data-name="Market Runner" data-price="50">Get bundle <span>↗</span></button></div></article>
+                <article class="bundle-card" data-category="voice"><div class="bundle-visual visual-night"><span class="visual-label">STAY IN TOUCH</span><span class="night-moon"></span><span class="visual-symbol">VOICE</span><span class="night-stars">✦ &nbsp; · &nbsp; ✦</span></div><div class="bundle-info"><div class="bundle-name"><div><h3>Community Link</h3><p>Talk with your network, near or far</p></div></div><div class="bundle-spec"><strong>200 mins</strong><span>30 days</span><span class="spec-divider"></span><strong>GH₵ 18</strong></div><button class="button button-outline buy-bundle" data-name="Community Link" data-price="18">Get bundle <span>↗</span></button></div></article>
+              </div>
+            </section>
+
+            <section class="section-block feature-section" id="weather">
+              <div class="section-heading"><div><p class="eyebrow section-eyebrow">A CLEARER VIEW</p><h2>Tools for every season</h2></div><div class="plan-switch" role="group" aria-label="Preview subscription plan"><button data-plan="basic">Basic</button><button class="current" data-plan="premium">Premium</button><button data-plan="enterprise">Enterprise</button></div></div>
+              <p class="plan-intro">See what's included with each AgriConnect plan.</p>
+              <div class="feature-list">
+                <a class="feature-row" href="#weather" data-feature-row="weather"><span class="feature-icon weather-icon">☼</span><span class="feature-copy"><strong>Weather intelligence</strong><small>Local forecasts and planting windows</small></span><span class="feature-access" data-access="weather">Included</span><span class="feature-arrow">↗</span></a>
+                <a class="feature-row" href="#assistant" data-feature-row="assistant"><span class="feature-icon assistant-icon">✳</span><span class="feature-copy"><strong>AI farming assistant</strong><small>Practical guidance, shaped around your farm</small></span><span class="feature-access" data-access="assistant">Included</span><span class="feature-arrow">↗</span></a>
+                <a class="feature-row" href="#learning" data-feature-row="learning"><span class="feature-icon learning-icon">▤</span><span class="feature-copy"><strong>Learning hub</strong><small>Short lessons from local experts</small></span><span class="feature-access" data-access="learning">Included</span><span class="feature-arrow">↗</span></a>
+                <a class="feature-row" href="#rewards" data-feature-row="rewards"><span class="feature-icon rewards-icon">◇</span><span class="feature-copy"><strong>Loyalty rewards</strong><small>Earn points as your business grows</small></span><span class="feature-access" data-access="rewards">Included</span><span class="feature-arrow">↗</span></a>
+              </div>
+              <div class="plan-footnote"><span>i</span> Feature access varies by plan. <a href="#plans">Compare plans</a></div>
+            </section>
+
+            <section class="section-block assistant-section" id="assistant">
+              <div class="assistant-panel"><div class="assistant-copy"><p class="eyebrow section-eyebrow">YOUR FIELD COMPANION</p><h2>A question about<br>your farm?</h2><p>Get practical guidance on crops, pests, soil and more, whenever you need it.</p><form class="assistant-form" id="assistant-form"><label class="sr-only" for="assistant-question">Ask the farming assistant</label><input id="assistant-question" type="text" placeholder="Ask about your crops..." required><button type="submit" aria-label="Send question">↗</button></form><div class="assistant-suggestions"><button type="button">When should I plant maize?</button><button type="button">How do I spot fall armyworm?</button></div></div><div class="assistant-art" aria-hidden="true"><span class="art-sun"></span><span class="art-hill hill-back"></span><span class="art-hill hill-front"></span><span class="art-stem stem-one"></span><span class="art-stem stem-two"></span><span class="art-stem stem-three"></span><span class="art-leaf leaf-one"></span><span class="art-leaf leaf-two"></span><span class="art-leaf leaf-three"></span><span class="art-leaf leaf-four"></span></div></div>
+              <div class="assistant-response" id="assistant-response" aria-live="polite" hidden></div>
+            </section>
+          </div>
+
+          <aside class="right-column" aria-label="Local updates">
+            <section class="weather-card" aria-labelledby="weather-title"><div class="rail-heading"><div><p class="eyebrow section-eyebrow">YOUR LOCATION</p><h2 id="weather-title">Weather window</h2></div><button class="small-more" aria-label="More weather options">···</button></div><div class="weather-location">Kumasi, Ashanti <span>⌄</span></div><div class="weather-today"><div><span class="weather-condition">Partly cloudy</span><div class="temperature">28<span>°</span></div><span class="weather-range">H: 30° &nbsp; L: 22°</span></div><div class="weather-sun" aria-hidden="true"><span></span></div></div><div class="weather-facts"><div><span>RAIN CHANCE</span><strong>20%</strong></div><div><span>HUMIDITY</span><strong>68%</strong></div><div><span>WIND</span><strong>12 km/h</strong></div></div><div class="forecast-row"><div><span>Tue</span><b>☼</b><strong>29°</strong></div><div><span>Wed</span><b>☁</b><strong>27°</strong></div><div><span>Thu</span><b>☂</b><strong>26°</strong></div><div><span>Fri</span><b>☼</b><strong>30°</strong></div></div><div class="weather-note"><span>↗</span><p><strong>Good window for field work</strong><br>Light showers possible late Thursday.</p></div></section>
+
+            <section class="wallet-card" id="wallet"><div class="rail-heading"><div><p class="eyebrow section-eyebrow">MOBILE MONEY</p><h2>Digital wallet</h2></div><span class="wallet-symbol">▣</span></div><div class="wallet-brand"><span class="wallet-mark">↗</span><span>Connected account</span><span class="connected-dot"></span></div><p class="wallet-number">•••• •••• 0248</p><div class="wallet-balance-label">AVAILABLE BALANCE</div><div class="wallet-balance"><span>GH₵</span>248.50</div><div class="wallet-actions"><button id="topup-button"><span>＋</span> Add money</button><button id="wallet-history"><span>↗</span> History</button></div><p class="wallet-disclaimer">Mobile money integration preview</p></section>
+
+            <section class="learning-card" id="learning"><div class="learning-top"><p class="eyebrow section-eyebrow">LEARN AS YOU GROW</p><span>01 / 04</span></div><div class="lesson-art"><span class="lesson-sun"></span><span class="lesson-ground"></span><span class="lesson-plant"></span><span class="lesson-leaf"></span></div><div class="lesson-details"><span class="lesson-type">CROP HEALTH <i>·</i> 6 MIN</span><h3>Know your soil,<br>grow with confidence</h3><a href="#learning" class="text-link">Explore learning hub <span>↗</span></a></div></section>
+
+            <section class="loyalty-card" id="rewards"><div class="loyalty-heading"><div><p class="eyebrow section-eyebrow">FIELD REWARDS</p><h2>Growing together</h2></div><span class="reward-star">✳</span></div><div class="loyalty-level"><span>GOLD MEMBER</span><strong>1,240 <small>pts</small></strong></div><div class="loyalty-track"><i></i><span></span></div><div class="loyalty-foot"><span>1,760 points to your next reward</span><a href="#rewards" aria-label="View rewards">↗</a></div></section>
+          </aside>
+        </section>
+
+        <section class="plans-section" id="plans"><div><p class="eyebrow section-eyebrow">ROOM TO GROW</p><h2>One platform. Your pace.</h2><p>Choose a plan that fits your work today, with room for tomorrow.</p></div><div class="plan-cards"><article class="plan-card" data-card-plan="basic"><span class="plan-name">BASIC</span><strong>Start simple</strong><p>Stay connected and get the essentials.</p><span class="plan-includes">Data bundles · Wallet · Rewards</span><button data-plan="basic" class="plan-choose">Explore Basic <span>↗</span></button></article><article class="plan-card plan-featured" data-card-plan="premium"><span class="plan-name">PREMIUM <i>POPULAR</i></span><strong>Grow with insight</strong><p>Everyday tools for a more informed season.</p><span class="plan-includes">Basic + Weather · Assistant · Learning</span><button data-plan="premium" class="plan-choose">Explore Premium <span>↗</span></button></article><article class="plan-card" data-card-plan="enterprise"><span class="plan-name">ENTERPRISE</span><strong>Connect your network</strong><p>Visibility and support across your operation.</p><span class="plan-includes">Premium + Team tools · Admin insights</span><button data-plan="enterprise" class="plan-choose">Explore Enterprise <span>↗</span></button></article></div></section>
+        <footer class="page-footer"><span>© 2025 FieldLink</span><span>Built for the people who grow us.</span><a href="#overview">Back to top ↑</a></footer>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog class="purchase-dialog" id="purchase-dialog"><form method="dialog" class="dialog-close-form"><button class="dialog-close" aria-label="Close dialog">×</button></form><div class="dialog-icon">◫</div><p class="eyebrow section-eyebrow">BUNDLE CHECKOUT</p><h2 id="dialog-title">Get Field Day</h2><p class="dialog-description">Your bundle will be charged to your connected mobile money wallet.</p><div class="dialog-summary"><span>Due today</span><strong id="dialog-price">GH₵ 25.00</strong></div><div class="dialog-wallet"><span class="wallet-mark">↗</span><span>Mobile money wallet</span><strong>GH₵ <span id="dialog-balance">248.50</span></strong></div><div class="dialog-actions"><button type="button" class="button button-outline" id="cancel-purchase">Cancel</button><button type="button" class="button button-dark" id="confirm-purchase">Confirm purchase <span>↗</span></button></div></dialog>
+</body>
+</html>
