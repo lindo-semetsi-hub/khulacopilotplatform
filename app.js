@@ -5,10 +5,10 @@ const plans = {
 };
 
 const roles = {
-  farmer: { name: 'Jordan', title: "Your farm's next good decision starts here.", profile: 'Farm manager' },
-  supplier: { name: 'Jordan', title: 'Keep your supply moving, season after season.', profile: 'Agricultural supplier' },
-  buyer: { name: 'Jordan', title: 'Find the right connections for your next harvest.', profile: 'Produce buyer' },
-  admin: { name: 'Jordan', title: 'Your network, connected in one place.', profile: 'Company administrator' }
+  farmer: { name: 'Lindokuhle', title: "Your farm's next good decision starts here.", profile: 'Farm manager' },
+  supplier: { name: 'Lindokuhle', title: 'Keep your supply moving, season after season.', profile: 'Agricultural supplier' },
+  buyer: { name: 'Lindokuhle', title: 'Find the right connections for your next harvest.', profile: 'Produce buyer' },
+  admin: { name: 'Lindokuhle', title: 'Your network, connected in one place.', profile: 'Company administrator' }
 };
 
 let currentPlan = 'premium';
