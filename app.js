@@ -101,8 +101,8 @@ document.querySelector('#confirm-purchase').addEventListener('click', () => {
     return;
   }
   walletBalance -= selectedBundle.price;
-  if (selectedBundle.name === 'Field Day') dataBalance += 5;
-  if (selectedBundle.name === 'Market Runner') dataBalance += 12;
+  if (selectedBundle.name === 'Basic') dataBalance += 5;
+  if (selectedBundle.name === 'Premium') dataBalance += 12;
   document.querySelector('#wallet-balance').textContent = walletBalance.toFixed(2);
   document.querySelector('#data-balance').textContent = dataBalance.toFixed(1);
   document.querySelector('#purchase-dialog').close();
