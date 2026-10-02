@@ -49,7 +49,7 @@ function setPlan(plan) {
 
 function setRole(role) {
   const selected = roles[role] || roles.farmer;
-  document.querySelector('#welcome-title').innerHTML = `Good morning, ${selected.name} <span class="wave">↗</span>`;
+  document.querySelector('#welcome-title').innerHTML = `Welcome, ${selected.name} <span class="wave">↗</span>`;
   document.querySelector('#welcome-subtitle').textContent = selected.title;
   document.querySelector('#profile-role').textContent = selected.profile;
 }
@@ -126,7 +126,7 @@ document.querySelector('#assistant-form').addEventListener('submit', (event) => 
   if (!question) return;
   const response = document.querySelector('#assistant-response');
   response.hidden = false;
-  response.textContent = `Thanks for asking: “${question}” For tailored advice, check your crop and local conditions first. The FieldLink assistant will provide farm-specific guidance when the AI service is connected.`;
+  response.textContent = `Thanks for asking: “${question}” For tailored advice, check your crop and MTN AgriConnect local conditions first. The  assistant will provide farm-specific guidance when the AI service is connected.`;
   document.querySelector('#assistant-question').value = '';
   response.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
