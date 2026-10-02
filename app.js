@@ -57,7 +57,7 @@ function setRole(role) {
 function openPurchase(name, price) {
   selectedBundle = { name, price: Number(price) };
   document.querySelector('#dialog-title').textContent = `Get ${name}`;
-  document.querySelector('#dialog-price').textContent = `GH₵ ${Number(price).toFixed(2)}`;
+  document.querySelector('#dialog-price').textContent = `R ${Number(price).toFixed(2)}`;
   document.querySelector('#dialog-balance').textContent = walletBalance.toFixed(2);
   document.querySelector('#purchase-dialog').showModal();
 }
@@ -106,7 +106,7 @@ document.querySelector('#confirm-purchase').addEventListener('click', () => {
   document.querySelector('#wallet-balance').textContent = walletBalance.toFixed(2);
   document.querySelector('#data-balance').textContent = dataBalance.toFixed(1);
   document.querySelector('#purchase-dialog').close();
-  toast(`${selectedBundle.name} added. GH₵ ${selectedBundle.price.toFixed(2)} charged to your demo wallet.`);
+  toast(`${selectedBundle.name} added. R ${selectedBundle.price.toFixed(2)} charged to your demo wallet.`);
   selectedBundle = null;
 });
 
