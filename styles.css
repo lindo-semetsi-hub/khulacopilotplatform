@@ -17,7 +17,7 @@ SIDEBAR
 .sidebar{
 width:260px;
 height:100vh;
-background:#000;
+background:hsl(60, 33%, 99%);
 position:fixed;
 left:0;
 top:0;
@@ -30,7 +30,7 @@ margin-bottom:40px;
 }
 
 .brand h2{
-color:#FFCC00;
+color:#efc211;
 font-size:38px;
 font-weight:700;
 }
