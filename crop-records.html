@@ -1,117 +1,115 @@
-<!DOCTYPE html> 
-<html lang="en"> 
-<head> 
-<meta charset="UTF-8"> 
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-<title>Farm Profile | Khula AI</title> 
-<link rel="stylesheet" href="styles.css"> 
-</head> 
-<body> 
-<div class="page-wrap"> 
-<h1>Farm Profile</h1> 
-<form id="farm-profile-form"> 
-<label>Farm Name</label> 
-<input type="text" id="farmName" required> 
-<label>Farm Owner</label> 
-<input type="text" id="farmOwner" required> 
-<label>Province</label> 
-<input type="text" id="province" required> 
-<label>District</label> 
-<input type="text" id="district" required> 
-<label>Farm Size (Hectares)</label> 
-<input type="number" id="farmSize" required> 
-<label>Farm Type</label> 
-<select id="farmType"> 
-<option>Crop Farming</option> 
-<option>Livestock Farming</option> 
-<option>Mixed Farming</option> 
-</select> 
-<label>Soil Type</label> 
-<input type="text" id="soilType"> 
-<label>Irrigation Method</label> 
-<input type="text" id="irrigationMethod"> 
-<button type="submit">Save Farm Profile</button> 
-</form> 
-<div id="profile-result"></div> 
-</div> 
-<script> 
-document.getElementById('farm-profile-form').addEventListener('submit', function(e){ 
- e.preventDefault(); 
- const profile={ 
- farmName: farmName.value, 
- farmOwner: farmOwner.value, 
- province: province.value, 
- district: district.value, 
- farmSize: farmSize.value, 
- farmType: farmType.value, 
- soilType: soilType.value, 
- irrigationMethod: irrigationMethod.value 
- }; 
- localStorage.setItem('farmProfile', JSON.stringify(profile)); 
- document.getElementById('profile-result').innerHTML='Farm profile saved successfully.'; 
-}); 
-</script> 
-</body> 
-</html> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crop Records | Khula AI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-wrap">
 
-<button type="submit">Save Crop Record</button> 
- 
-</form> 
- 
-<h2>Saved Crop Records</h2> 
-<div id="crop-list"></div> 
- 
-</div> 
- 
-<script> 
-function loadCrops(){ 
- const crops = JSON.parse(localStorage.getItem('cropRecords')) || []; 
- const cropList = document.getElementById('crop-list'); 
- cropList.innerHTML = ''; 
- 
- crops.forEach((crop,index)=>{ 
-  cropList.innerHTML += ` 
-   <div class="crop-card"> 
-    <h3>${crop.cropName}</h3> 
-    <p><strong>Variety:</strong> ${crop.cropVariety}</p> 
-    <p><strong>Planting Date:</strong> ${crop.plantingDate}</p> 
-    <p><strong>Growth Stage:</strong> ${crop.growthStage}</p> 
-    <p><strong>Expected Harvest:</strong> ${crop.harvestDate}</p> 
-    <p><strong>Fertilizer:</strong> ${crop.fertilizerUsed}</p> 
-   </div>`; 
- }); 
-} 
- 
-document.getElementById('crop-form').addEventListener('submit', function(e){ 
- e.preventDefault(); 
- 
- const crop = { 
-  cropName: cropName.value, 
-  cropVariety: cropVariety.value, 
-  plantingDate: plantingDate.value, 
-  seedType: seedType.value, 
-  seedSupplier: seedSupplier.value, 
-  fertilizerUsed: fertilizerUsed.value, 
-  irrigationMethod: irrigationMethod.value, 
-  growthStage: growthStage.value, 
-  harvestDate: harvestDate.value, 
-  notes: notes.value 
- }; 
- 
- const crops = JSON.parse(localStorage.getItem('cropRecords')) || []; 
- crops.push(crop); 
- localStorage.setItem('cropRecords', JSON.stringify(crops)); 
- 
- alert('Crop record saved successfully'); 
- document.getElementById('crop-form').reset(); 
- loadCrops(); 
-}); 
- 
-loadCrops(); 
+<h1>Crop Lifecycle Records</h1>
+<p>Capture and track the complete lifecycle of every crop on your farm.</p>
+
+<form id="crop-form">
+
+<label>Crop Name</label>
+<input type="text" id="cropName" required>
+
+<label>Crop Variety</label>
+<input type="text" id="cropVariety" required>
+
+<label>Planting Date</label>
+<input type="date" id="plantingDate" required>
+
+<label>Seed Type</label>
+<input type="text" id="seedType">
+
+<label>Seed Supplier</label>
+<input type="text" id="seedSupplier">
+
+<label>Fertilizer Used</label>
+<input type="text" id="fertilizerUsed">
+
+<label>Irrigation Method</label>
+<input type="text" id="irrigationMethod">
+
+<label>Current Growth Stage</label>
+<select id="growthStage">
+<option>Seeded</option>
+<option>Germination</option>
+<option>Vegetative</option>
+<option>Flowering</option>
+<option>Fruit Development</option>
+<option>Ready For Harvest</option>
+</select>
+
+<label>Expected Harvest Date</label>
+<input type="date" id="harvestDate">
+
+<label>Notes</label>
+<textarea id="notes"></textarea>
+
+<button type="submit">Save Crop Record</button>
+
+</form>
+
+<h2>Saved Crop Records</h2>
+<div id="crop-list"></div>
+
+</div>
+
+<script>
+function loadCrops(){
+ const crops = JSON.parse(localStorage.getItem('cropRecords')) || [];
+ const cropList = document.getElementById('crop-list');
+ cropList.innerHTML = '';
+
+ crops.forEach((crop,index)=>{
+  cropList.innerHTML += `
+   <div class="crop-card">
+    <h3>${crop.cropName}</h3>
+    <p><strong>Variety:</strong> ${crop.cropVariety}</p>
+    <p><strong>Planting Date:</strong> ${crop.plantingDate}</p>
+    <p><strong>Growth Stage:</strong> ${crop.growthStage}</p>
+    <p><strong>Expected Harvest:</strong> ${crop.harvestDate}</p>
+    <p><strong>Fertilizer:</strong> ${crop.fertilizerUsed}</p>
+   </div>`;
+ });
+}
+
+document.getElementById('crop-form').addEventListener('submit', function(e){
+ e.preventDefault();
+
+ const crop = {
+  cropName: cropName.value,
+  cropVariety: cropVariety.value,
+  plantingDate: plantingDate.value,
+  seedType: seedType.value,
+  seedSupplier: seedSupplier.value,
+  fertilizerUsed: fertilizerUsed.value,
+  irrigationMethod: irrigationMethod.value,
+  growthStage: growthStage.value,
+  harvestDate: harvestDate.value,
+  notes: notes.value
+ };
+
+ const crops = JSON.parse(localStorage.getItem('cropRecords')) || [];
+ crops.push(crop);
+ localStorage.setItem('cropRecords', JSON.stringify(crops));
+
+ alert('Crop record saved successfully');
+ document.getElementById('crop-form').reset();
+ loadCrops();
+});
+
+loadCrops();
 </script>
 
-</body> 
+</body>
 </html>
+
 
 
 
