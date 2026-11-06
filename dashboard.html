@@ -90,3 +90,65 @@ console.log('Crop Records', cropRecords);
  
 </body> 
 </html>
+
+
+<div id="farm-summary"></div>
+const farmProfile =
+JSON.parse(localStorage.getItem("farmProfile"));
+
+if(farmProfile){
+
+document.getElementById("farm-summary").innerHTML = `
+
+<h2>${farmProfile.farmName}</h2>
+
+<p>${farmProfile.province}</p>
+
+<p>${farmProfile.farmSize} Hectares</p>
+
+<p>${farmProfile.soilType}</p>
+
+`;
+
+}
+
+
+
+
+
+<!-- Sidebar Navigation -->
+<aside class="sidebar">
+
+<div class="brand">
+<h2>Khula AI</h2>
+</div>
+
+<nav>
+
+<a href="dashboard.html">
+Dashboard
+</a>
+
+<a href="farm-profile.html">
+Farm Profile
+</a>
+
+<a href="crop-records.html">
+Crop Records
+</a>
+
+<a href="copilot.html">
+AI Copilot
+</a>
+
+<a href="marketplace.html">
+Marketplace
+</a>
+
+<a href="bundles.html">
+Data Bundles
+</a>
+
+</nav>
+
+</aside>
