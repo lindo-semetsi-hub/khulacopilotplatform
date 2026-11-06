@@ -1,134 +1,88 @@
-const plans = {
-  basic: { label: 'Basic plan', features: ['wallet', 'rewards'] },
-  premium: { label: 'Premium plan', features: ['weather', 'assistant', 'learning', 'wallet', 'rewards'] },
-  enterprise: { label: 'Enterprise plan', features: ['weather', 'assistant', 'learning', 'wallet', 'rewards', 'admin'] }
-};
+const plans = { 
+  basic: { label: 'Basic plan', features: ['wallet', 'rewards'] }, 
+  premium: { label: 'Premium plan', features: ['weather', 'assistant', 'learning', 'wallet', 'rewards'] }, 
+  enterprise: { label: 'Enterprise plan', features: ['weather', 'assistant', 'learning', 'wallet', 'rewards', 'admin'] } 
+}; 
+ 
+const roles = { 
+  farmer: { name: 'Lindokuhle', title: "Your farm's next good decision starts here.", profile: 'Farm manager' }, 
+  supplier: { name: 'Lindokuhle', title: 'Keep your supply moving, season after season.', profile: 'Agricultural supplier' }, 
+  buyer: { name: 'Lindokuhle', title: 'Find the right connections for your next harvest.', profile: 'Produce buyer' }, 
+  admin: { name: 'Lindokuhle', title: 'Your network, connected in one place.', profile: 'Company administrator' } 
+}; 
+ 
+let currentPlan = 'premium'; 
+let walletBalance = 248.50; 
+let dataBalance = 4.8; 
+let selectedBundle = null; 
+let toastTimeout; 
+ 
+const toast = (message) => { 
+  const element = document.querySelector('#toast'); 
+  element.textContent = message; 
+  element.classList.add('show'); 
+  clearTimeout(toastTimeout); 
+  toastTimeout = setTimeout(() => element.classList.remove('show'), 2800); 
+}; 
+ 
+function setPlan(plan) { 
+  if (!plans[plan]) return; 
+  currentPlan = plan; 
+  document.querySelector('#sidebar-plan').textContent = plans[plan].label; 
+} 
+ 
+function setRole(role) { 
+  const selected = roles[role] || roles.farmer; 
+  document.querySelector('#welcome-title').innerHTML = `Welcome, ${selected.name} <span class="wave">↗</span>`; 
+  document.querySelector('#welcome-subtitle').textContent = selected.title; 
+  document.querySelector('#profile-role').textContent = selected.profile; 
+} 
+ 
+// co pilot
+ 
+document.querySelector('#assistant-form').addEventListener('submit', (event) => { 
+  event.preventDefault(); 
+ 
+  const question = document 
+    .querySelector('#assistant-question') 
 
-const roles = {
-  farmer: { name: 'Lindokuhle', title: "Your farm's next good decision starts here.", profile: 'Farm manager' },
-  supplier: { name: 'Lindokuhle', title: 'Keep your supply moving, season after season.', profile: 'Agricultural supplier' },
-  buyer: { name: 'Lindokuhle', title: 'Find the right connections for your next harvest.', profile: 'Produce buyer' },
-  admin: { name: 'Lindokuhle', title: 'Your network, connected in one place.', profile: 'Company administrator' }
-};
-
-let currentPlan = 'premium';
-let walletBalance = 248.50;
-let dataBalance = 4.8;
-let selectedBundle = null;
-let toastTimeout;
-
-const toast = (message) => {
-  const element = document.querySelector('#toast');
-  element.textContent = message;
-  element.classList.add('show');
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => element.classList.remove('show'), 2800);
-};
-
-function setPlan(plan) {
-  if (!plans[plan]) return;
-  currentPlan = plan;
-  document.querySelector('#sidebar-plan').textContent = plans[plan].label;
-  document.querySelectorAll('.plan-switch button').forEach((button) => {
-    const active = button.dataset.plan === plan;
-    button.classList.toggle('current', active);
-    button.setAttribute('aria-pressed', String(active));
-  });
-  document.querySelectorAll('[data-access]').forEach((label) => {
-    const included = plans[plan].features.includes(label.dataset.access);
-    label.textContent = included ? 'Included' : 'Upgrade to unlock';
-    label.classList.toggle('locked', !included);
-  });
-  document.querySelectorAll('[data-feature]').forEach((icon) => {
-    icon.hidden = plans[plan].features.includes(icon.dataset.feature);
-  });
-  document.querySelectorAll('.plan-card').forEach((card) => {
-    card.classList.toggle('plan-featured', card.dataset.cardPlan === plan);
-  });
-}
-
-function setRole(role) {
-  const selected = roles[role] || roles.farmer;
-  document.querySelector('#welcome-title').innerHTML = `Welcome, ${selected.name} <span class="wave">↗</span>`;
-  document.querySelector('#welcome-subtitle').textContent = selected.title;
-  document.querySelector('#profile-role').textContent = selected.profile;
-}
-
-function openPurchase(name, price) {
-  selectedBundle = { name, price: Number(price) };
-  document.querySelector('#dialog-title').textContent = `Get ${name}`;
-  document.querySelector('#dialog-price').textContent = `R ${Number(price).toFixed(2)}`;
-  document.querySelector('#dialog-balance').textContent = walletBalance.toFixed(2);
-  document.querySelector('#purchase-dialog').showModal();
-}
-
-document.querySelectorAll('.filter-tab').forEach((tab) => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.filter-tab').forEach((item) => {
-      const active = item === tab;
-      item.classList.toggle('selected', active);
-      item.setAttribute('aria-selected', String(active));
-    });
-    document.querySelectorAll('.bundle-card').forEach((card) => {
-      card.hidden = tab.dataset.filter !== 'all' && card.dataset.category !== tab.dataset.filter;
-    });
-  });
-});
-
-document.querySelectorAll('[data-scroll]').forEach((button) => {
-  button.addEventListener('click', () => document.querySelector(button.dataset.scroll)?.scrollIntoView({ behavior: 'smooth' }));
-});
-
-document.querySelectorAll('.plan-switch [data-plan], .plan-choose[data-plan]').forEach((button) => {
-  button.addEventListener('click', () => {
-    setPlan(button.dataset.plan);
-    if (button.classList.contains('plan-choose')) {
-      document.querySelector('#weather').scrollIntoView({ behavior: 'smooth' });
-      toast(`${plans[button.dataset.plan].label} selected for preview`);
-    }
-  });
-});
-
-document.querySelector('#manage-plan').addEventListener('click', () => document.querySelector('#plans').scrollIntoView({ behavior: 'smooth' }));
-document.querySelector('#role-select').addEventListener('change', (event) => setRole(event.target.value));
-document.querySelectorAll('.buy-bundle').forEach((button) => button.addEventListener('click', () => openPurchase(button.dataset.name, button.dataset.price)));
-document.querySelector('#cancel-purchase').addEventListener('click', () => document.querySelector('#purchase-dialog').close());
-document.querySelector('#confirm-purchase').addEventListener('click', () => {
-  if (!selectedBundle) return;
-  if (walletBalance < selectedBundle.price) {
-    document.querySelector('#purchase-dialog').close();
-    toast('Your wallet balance is too low. Add money to continue.');
-    return;
-  }
-  walletBalance -= selectedBundle.price;
-  if (selectedBundle.name === 'Basic') dataBalance += 5;
-  if (selectedBundle.name === 'Premium') dataBalance += 12;
-  document.querySelector('#wallet-balance').textContent = walletBalance.toFixed(2);
-  document.querySelector('#data-balance').textContent = dataBalance.toFixed(1);
-  document.querySelector('#purchase-dialog').close();
-  toast(`${selectedBundle.name} added. R ${selectedBundle.price.toFixed(2)} charged to your demo wallet.`);
-  selectedBundle = null;
-});
-
-document.querySelector('#topup-button').addEventListener('click', () => toast('Wallet top-up is a static preview. Connect your mobile money provider to enable payments.'));
-document.querySelector('#wallet-history').addEventListener('click', () => toast('No recent transactions in this demo wallet.'));
-
-document.querySelectorAll('.assistant-suggestions button').forEach((button) => {
-  button.addEventListener('click', () => {
-    document.querySelector('#assistant-question').value = button.textContent;
-    document.querySelector('#assistant-form').requestSubmit();
-  });
-});
-
-document.querySelector('#assistant-form').addEventListener('submit', (event) => {
-  event.preventDefault();
-  const question = document.querySelector('#assistant-question').value.trim();
-  if (!question) return;
-  const response = document.querySelector('#assistant-response');
-  response.hidden = false;
-  response.textContent = `Thanks for asking: “${question}” For tailored advice, check your crop and MTN AgriConnect local conditions first. The  assistant will provide farm-specific guidance when the AI service is connected.`;
-  document.querySelector('#assistant-question').value = '';
-  response.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-});
-
-setPlan(currentPlan);
+      .value 
+    .trim() 
+    .toLowerCase(); 
+ 
+  if (!question) return; 
+ 
+  const response = document.querySelector('#assistant-response'); 
+ 
+  let answer = ''; 
+ 
+  if (question.includes('maize')) { 
+    answer = ' Planting Advisor: Maize is typically planted between October and December in South Africa. Monitor rainfall forecasts before planting.'; 
+  } 
+  else if (question.includes('weather') || question.includes('rain')) { 
+    answer = '🌦 Climate Risk Advisor: Rainfall is expected this week. Consider delaying irrigation and monitoring soil moisture levels.'; 
+  } 
+  else if (question.includes('buyer') || question.includes('market')) { 
+    answer = 'Market Insight: Demand for maize and vegetables remains strong. Potential buyers include food processors, wholesalers and retailers.'; 
+  } 
+  else if (question.includes('disease') || question.includes('pest')) { 
+    answer = ' Crop Health Record: Monitor crops for leaf discoloration, pest damage and signs of fungal infection. Early detection improves yield outcomes.'; 
+  } 
+  else if (question.includes('finance') || question.includes('loan')) { 
+    answer = ' Finance Assistant: Explore agricultural grants, production loans and equipment financing opportunities for farm expansion.'; 
+  } 
+  else { 
+    answer = ' Farm Copilot can assist with planting advice, climate risks, crop health, buyers, logistics, financing and learning resources.'; 
+  } 
+ 
+  response.hidden = false; 
+  response.innerHTML = answer; 
+  document.querySelector('#assistant-question').value = ''; 
+ 
+  response.scrollIntoView({ 
+    behavior: 'smooth', 
+    block: 'nearest' 
+  }); 
+}); 
+ 
+setPlan(currentPlan); 
