@@ -1,7 +1,7 @@
 const plans = { 
   basic: { label: 'Basic plan', features: ['wallet', 'rewards'] }, 
-  premium: { label: 'Premium plan', features: ['weather', 'assistant', 'learning', 'wallet', 'rewards'] }, 
-  enterprise: { label: 'Enterprise plan', features: ['weather', 'assistant', 'learning', 'wallet', 'rewards', 'admin'] } 
+  premium: { label: 'Premium plan', features: ['weather', 'copilot', 'learning', 'wallet', 'rewards'] }, 
+  enterprise: { label: 'Enterprise plan', features: ['weather', 'copilot', 'learning', 'wallet', 'rewards', 'admin'] } 
 }; 
  
 const roles = { 
@@ -40,11 +40,11 @@ function setRole(role) {
  
 // co pilot
  
-document.querySelector('#assistant-form').addEventListener('submit', (event) => { 
+document.querySelector('#copilot-form').addEventListener('submit', (event) => { 
   event.preventDefault(); 
  
   const question = document 
-    .querySelector('#assistant-question') 
+    .querySelector('#copilot-question') 
 
       .value 
     .trim() 
@@ -52,7 +52,7 @@ document.querySelector('#assistant-form').addEventListener('submit', (event) => 
  
   if (!question) return; 
  
-  const response = document.querySelector('#assistant-response'); 
+  const response = document.querySelector('#copilot-response'); 
  
   let answer = ''; 
  
@@ -77,7 +77,7 @@ document.querySelector('#assistant-form').addEventListener('submit', (event) => 
  
   response.hidden = false; 
   response.innerHTML = answer; 
-  document.querySelector('#assistant-question').value = ''; 
+  document.querySelector('#copilot-question').value = ''; 
  
   response.scrollIntoView({ 
     behavior: 'smooth', 

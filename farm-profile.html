@@ -1,0 +1,64 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Farm Profile | Khula AI</title> 
+
+<link rel="stylesheet" href="styles.css"> 
+</head> 
+<body> 
+<div class="page-wrap"> 
+<h1>Farm Profile</h1> 
+<form id="farm-profile-form"> 
+
+
+<label>Farm Name</label> 
+<input type="text" id="farmName" required> 
+
+<label>Farm Owner</label> 
+<input type="text" id="farmOwner" required> 
+
+<label>Province</label> 
+<input type="text" id="province" required> 
+
+<label>District</label> 
+<input type="text" id="district" required> 
+
+<label>Farm Size (Hectares)</label> 
+<input type="number" id="farmSize" required> 
+
+<label>Farm Type</label> 
+<select id="farmType"> 
+    
+<option>Crop Farming</option> 
+<option>Livestock Farming</option> 
+<option>Mixed Farming</option> 
+</select> 
+<label>Soil Type</label> 
+<input type="text" id="soilType"> 
+<label>Irrigation Method</label> 
+<input type="text" id="irrigationMethod"> 
+<button type="submit">Save Farm Profile</button> 
+</form> 
+<div id="profile-result"></div> 
+</div> 
+<script> 
+document.getElementById('farm-profile-form').addEventListener('submit', function(e){ 
+ e.preventDefault(); 
+ const profile={ 
+ farmName: farmName.value, 
+ farmOwner: farmOwner.value, 
+ province: province.value, 
+ district: district.value, 
+ farmSize: farmSize.value, 
+ farmType: farmType.value, 
+ soilType: soilType.value, 
+ irrigationMethod: irrigationMethod.value 
+ }; 
+ localStorage.setItem('farmProfile', JSON.stringify(profile)); 
+ document.getElementById('profile-result').innerHTML='Farm profile saved successfully.'; 
+}); 
+</script> 
+</body> 
+</html> 
