@@ -98,3 +98,9 @@ align-items:center;
 justify-content:center;
 font-weight:bold;
 }
+
+
+.page-wrap{
+    margin-left:280px;
+    padding:30px;
+}
