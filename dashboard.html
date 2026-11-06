@@ -18,9 +18,7 @@
   <!-- Farm Summary -->
 <h2>Farm Summary</h2>
 
-<div id="farm-summary">
-No farm profile found.
-</div>
+
 
 </div>
 
@@ -28,9 +26,7 @@ No farm profile found.
 
 <h2>Crop Summary</h2>
 
-<div id="crop-summary">
-No crops recorded.
-</div>
+
 
 </div>
 
@@ -120,16 +116,6 @@ console.log('Crop Records', cropRecords);
 
 
 
-
-                    <!-- crop record summary -->
-
-<div id="crop-summary"></div>
-
-const crops =
-JSON.parse(localStorage.getItem("cropRecords")) || [];
-
-document.getElementById("crop-summary").innerHTML =
-`Active Crops: ${crops.length}`;
 
 
 
