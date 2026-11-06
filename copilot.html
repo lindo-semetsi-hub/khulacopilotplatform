@@ -1,0 +1,89 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Khula AI Copilot</title> 
+<link rel="stylesheet" href="styles.css"> 
+</head> 
+<body> 
+ 
+<div class="page-wrap"> 
+ 
+<h1>Khula AI Farm Copilot</h1> 
+<p>Your digital farm memory and decision-support assistant.</p> 
+ 
+<div class="copilot-dashboard"> 
+ 
+<div class="copilot-card"> 
+<h2>Crop Health Status</h2> 
+<p>Maize Field A</p> 
+<p><strong>Health Score:</strong> 92%</p> 
+<p>Status: Healthy</p> 
+</div> 
+ 
+<div class="copilot-card"> 
+<h2>Climate Risk</h2> 
+<p><strong>Risk Level:</strong> Low</p> 
+<p>Rain expected within 5 days.</p> 
+<p>Recommendation: Delay irrigation.</p> 
+</div> 
+ 
+<div class="copilot-card"> 
+<h2>Market Insight</h2> 
+<p>Current demand for maize is increasing.</p> 
+<p>Buyer demand: +18%</p> 
+</div> 
+ 
+</div> 
+ 
+<h2>Ask Khula AI</h2> 
+ 
+<form id="copilot-form"> 
+<input 
+type="text" 
+id="question" 
+placeholder="Ask about crops, weather, diseases, buyers or financing" 
+required> 
+ 
+<button type="submit">Ask Copilot</button> 
+</form> 
+ 
+<div id="response"></div>
+
+</div> 
+ 
+<script> 
+document.getElementById('copilot-form').addEventListener('submit',function(e){ 
+ e.preventDefault(); 
+ 
+ const q = document.getElementById('question').value.toLowerCase(); 
+ const response = document.getElementById('response'); 
+ 
+ let answer = ''; 
+ 
+ if(q.includes('maize')){ 
+    answer = 'Planting Advisor: Maize is commonly planted between October and December. Ensure sufficient moisture before planting.'; 
+ } 
+ else if(q.includes('weather') || q.includes('rain')){ 
+    answer = 'Climate Risk Advisor: Rainfall is forecast within the next few days. Delay irrigation and monitor soil conditions.'; 
+ } 
+ else if(q.includes('buyer')){ 
+    answer = 'Buyer Discovery: Potential buyers include grain traders, food processors and retail distributors.'; 
+ } 
+ else if(q.includes('disease') || q.includes('pest')){ 
+    answer = 'Crop Health Record: Monitor for leaf discoloration, wilting and pest damage. Early detection improves yield outcomes.'; 
+ } 
+ else if(q.includes('finance') || q.includes('loan')){ 
+    answer = 'Finance Assistant: Agricultural grants, development finance and seasonal production loans may be suitable options.'; 
+ } 
+ else { 
+    answer = 'Khula AI can assist with crop planning, climate risks, diseases, buyers, financing and logistics.'; 
+ } 
+ 
+ response.innerHTML = '<div class="copilot-card"><h3>Recommendation</h3><p>'+answer+'</p></div>'; 
+}); 
+</script> 
+ 
+</body> 
+</html>
