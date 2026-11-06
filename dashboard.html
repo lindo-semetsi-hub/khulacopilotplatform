@@ -113,10 +113,20 @@ document.getElementById("farm-summary").innerHTML = `
 }
 
 
+                    <!-- crop record summary -->
+
+<div id="crop-summary"></div>
+
+const crops =
+JSON.parse(localStorage.getItem("cropRecords")) || [];
+
+document.getElementById("crop-summary").innerHTML =
+`Active Crops: ${crops.length}`;
 
 
 
-<!-- Sidebar Navigation -->
+
+       <!-- Sidebar Navigation -->
 <aside class="sidebar">
 
 <div class="brand">
