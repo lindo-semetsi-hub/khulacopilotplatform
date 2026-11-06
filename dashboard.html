@@ -11,6 +11,31 @@
 <div class="page-wrap"> 
  
 <h1>Khula AI Dashboard</h1> 
+
+
+<div class="dashboard-card">
+
+  <!-- Farm Summary -->
+<h2>Farm Summary</h2>
+
+<div id="farm-summary">
+No farm profile found.
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h2>Crop Summary</h2>
+
+<div id="crop-summary">
+No crops recorded.
+</div>
+
+</div>
+
+
+
 <p>Your digital farm memory and crop lifecycle command center.</p> 
  
 <div class="dashboard-grid"> 
@@ -62,6 +87,8 @@
 <h2>Recent Crop Activities</h2> 
  
 <div class="dashboard-card"> 
+
+
 <ul> 
 <li>15 Oct - Maize planted</li> 
 <li>22 Oct - Fertilizer applied</li> 
@@ -92,25 +119,6 @@ console.log('Crop Records', cropRecords);
 </html>
 
 
-<div id="farm-summary"></div>
-const farmProfile =
-JSON.parse(localStorage.getItem("farmProfile"));
-
-if(farmProfile){
-
-document.getElementById("farm-summary").innerHTML = `
-
-<h2>${farmProfile.farmName}</h2>
-
-<p>${farmProfile.province}</p>
-
-<p>${farmProfile.farmSize} Hectares</p>
-
-<p>${farmProfile.soilType}</p>
-
-`;
-
-}
 
 
                     <!-- crop record summary -->
