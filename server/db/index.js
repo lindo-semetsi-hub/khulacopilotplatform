@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
@@ -9,9 +9,13 @@ export const db = new PGlite(dataDirectory);
 
 export async function initializeDatabase() {
   await db.waitReady;
-  const migration = await readFile(
-    path.join(directory, 'migrations', '001_initial_schema.sql'),
-    'utf8'
-  );
-  await db.exec(migration);
+  const migrationsDirectory = path.join(directory, 'migrations');
+  const migrations = (await readdir(migrationsDirectory))
+    .filter((file) => /^\d+_.+\.sql$/.test(file))
+    .sort();
+
+  for (const migrationFile of migrations) {
+    const migration = await readFile(path.join(migrationsDirectory, migrationFile), 'utf8');
+    await db.exec(migration);
+  }
 }

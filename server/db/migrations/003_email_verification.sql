@@ -1,0 +1,12 @@
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS email_verifications (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+DELETE FROM auth_sessions
+WHERE user_id IN (SELECT id FROM users WHERE email_verified = FALSE);
