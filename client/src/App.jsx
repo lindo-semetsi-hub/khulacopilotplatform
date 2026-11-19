@@ -160,15 +160,15 @@ function App() {
   const selectedFarm = farms.find((farm) => farm.id === selectedFarmId);
 
   if (pageLoading) {
-    return <main className="loading">Connecting to AgriConnect...</main>;
+    return <main className="loading">Connecting to Khula AI...</main>;
   }
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="AgriConnect home">
-          <span className="brand-mark" aria-hidden="true">A</span>
-          <span>AgriConnect</span>
+        <a className="brand" href="/" aria-label="Khula AI home">
+          <span className="brand-mark" aria-hidden="true">K</span>
+          <span>Khula AI</span>
         </a>
         <span className="topbar-label">Crop lifecycle workspace</span>
       </header>
@@ -425,7 +425,7 @@ function App() {
         </aside>
       </section>
       <footer className="footer">
-        <span>AgriConnect · Crop lifecycle workspace</span>
+        <span>Khula AI · Crop lifecycle workspace</span>
         <span>Weather, marketplace, and plan features can be added as the product grows.</span>
       </footer>
     </main>

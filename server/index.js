@@ -1,8 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
-import pg from 'pg';
+import { db, initializeDatabase } from './db/index.js';
 
-const { Pool } = pg;
 const app = express();
 const port = Number(process.env.PORT) || 3001;
 const stages = [
@@ -15,9 +14,6 @@ const stages = [
   'harvested'
 ];
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const pool = process.env.DATABASE_URL
-  ? new Pool({ connectionString: process.env.DATABASE_URL })
-  : null;
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -51,28 +47,18 @@ function validId(value, label) {
   return value;
 }
 
-function requireDatabase(_request, response, next) {
-  if (!pool) {
-    response.status(503).json({
-      error: 'Database is not configured. Set DATABASE_URL in your .env file.'
-    });
-    return;
-  }
-  next();
-}
-
-app.get('/api/health', requireDatabase, async (_request, response, next) => {
+app.get('/api/health', async (_request, response, next) => {
   try {
-    await pool.query('SELECT 1');
+    await db.query('SELECT 1');
     response.json({ status: 'ok', database: 'connected' });
   } catch (error) {
     next(error);
   }
 });
 
-app.get('/api/farms', requireDatabase, async (_request, response, next) => {
+app.get('/api/farms', async (_request, response, next) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT id, name, owner_name, province, district, area_hectares,
               farm_type, soil_type, irrigation_method, created_at, updated_at
        FROM farms
@@ -84,7 +70,7 @@ app.get('/api/farms', requireDatabase, async (_request, response, next) => {
   }
 });
 
-app.post('/api/farms', requireDatabase, async (request, response, next) => {
+app.post('/api/farms', async (request, response, next) => {
   try {
     const name = requiredText(request.body.name, 'Farm name');
     const ownerName = requiredText(request.body.ownerName, 'Farm owner');
@@ -100,7 +86,7 @@ app.post('/api/farms', requireDatabase, async (request, response, next) => {
       throw Object.assign(new Error('Farm type is invalid.'), { status: 400 });
     }
 
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO farms
         (name, owner_name, province, district, area_hectares, farm_type, soil_type, irrigation_method)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -123,10 +109,10 @@ app.post('/api/farms', requireDatabase, async (request, response, next) => {
   }
 });
 
-app.get('/api/farms/:farmId/crop-cycles', requireDatabase, async (request, response, next) => {
+app.get('/api/farms/:farmId/crop-cycles', async (request, response, next) => {
   try {
     const farmId = validId(request.params.farmId, 'Farm ID');
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT id, farm_id, crop_name, variety, field_name, planting_date,
               expected_harvest_date, seed_type, seed_supplier, fertilizer_used,
               irrigation_method, current_stage, notes, created_at, updated_at
@@ -141,15 +127,7 @@ app.get('/api/farms/:farmId/crop-cycles', requireDatabase, async (request, respo
   }
 });
 
-app.post('/api/farms/:farmId/crop-cycles', requireDatabase, async (request, response, next) => {
-  const client = await pool?.connect();
-  if (!client) {
-    response.status(503).json({
-      error: 'Database is not configured. Set DATABASE_URL in your .env file.'
-    });
-    return;
-  }
-
+app.post('/api/farms/:farmId/crop-cycles', async (request, response, next) => {
   try {
     const farmId = validId(request.params.farmId, 'Farm ID');
     const cropName = requiredText(request.body.cropName, 'Crop name');
@@ -172,54 +150,44 @@ app.post('/api/farms/:farmId/crop-cycles', requireDatabase, async (request, resp
       );
     }
 
-    await client.query('BEGIN');
-    const result = await client.query(
-      `INSERT INTO crop_cycles
-        (farm_id, crop_name, variety, field_name, planting_date, expected_harvest_date,
-         seed_type, seed_supplier, fertilizer_used, irrigation_method, current_stage, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-       RETURNING id, farm_id, crop_name, variety, field_name, planting_date,
-                 expected_harvest_date, seed_type, seed_supplier, fertilizer_used,
-                 irrigation_method, current_stage, notes, created_at, updated_at`,
-      [
-        farmId,
-        cropName,
-        variety,
-        optionalText(request.body.fieldName),
-        plantingDate,
-        expectedHarvestDate,
-        optionalText(request.body.seedType),
-        optionalText(request.body.seedSupplier),
-        optionalText(request.body.fertilizerUsed),
-        optionalText(request.body.irrigationMethod),
-        stage,
-        optionalText(request.body.notes)
-      ]
-    );
-    await client.query(
-      `INSERT INTO crop_events (crop_cycle_id, event_type, occurred_on, growth_stage, notes)
-       VALUES ($1, 'cycle_created', CURRENT_DATE, $2, $3)`,
-      [result.rows[0].id, stage, 'Crop cycle created']
-    );
-    await client.query('COMMIT');
+    const result = await db.transaction(async (tx) => {
+      const cropResult = await tx.query(
+        `INSERT INTO crop_cycles
+          (farm_id, crop_name, variety, field_name, planting_date, expected_harvest_date,
+           seed_type, seed_supplier, fertilizer_used, irrigation_method, current_stage, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         RETURNING id, farm_id, crop_name, variety, field_name, planting_date,
+                   expected_harvest_date, seed_type, seed_supplier, fertilizer_used,
+                   irrigation_method, current_stage, notes, created_at, updated_at`,
+        [
+          farmId,
+          cropName,
+          variety,
+          optionalText(request.body.fieldName),
+          plantingDate,
+          expectedHarvestDate,
+          optionalText(request.body.seedType),
+          optionalText(request.body.seedSupplier),
+          optionalText(request.body.fertilizerUsed),
+          optionalText(request.body.irrigationMethod),
+          stage,
+          optionalText(request.body.notes)
+        ]
+      );
+      await tx.query(
+        `INSERT INTO crop_events (crop_cycle_id, event_type, occurred_on, growth_stage, notes)
+         VALUES ($1, 'cycle_created', CURRENT_DATE, $2, $3)`,
+        [cropResult.rows[0].id, stage, 'Crop cycle created']
+      );
+      return cropResult;
+    });
     response.status(201).json(result.rows[0]);
   } catch (error) {
-    await client.query('ROLLBACK');
     next(error);
-  } finally {
-    client.release();
   }
 });
 
-app.patch('/api/crop-cycles/:cropCycleId/stage', requireDatabase, async (request, response, next) => {
-  const client = await pool?.connect();
-  if (!client) {
-    response.status(503).json({
-      error: 'Database is not configured. Set DATABASE_URL in your .env file.'
-    });
-    return;
-  }
-
+app.patch('/api/crop-cycles/:cropCycleId/stage', async (request, response, next) => {
   try {
     const cropCycleId = validId(request.params.cropCycleId, 'Crop cycle ID');
     const stage = requiredText(request.body.currentStage, 'Growth stage');
@@ -228,35 +196,35 @@ app.patch('/api/crop-cycles/:cropCycleId/stage', requireDatabase, async (request
       throw Object.assign(new Error('Growth stage is invalid.'), { status: 400 });
     }
 
-    await client.query('BEGIN');
-    const result = await client.query(
-      `UPDATE crop_cycles
-       SET current_stage = $2, updated_at = now()
-       WHERE id = $1
-       RETURNING id, farm_id, crop_name, variety, field_name, planting_date,
-                 expected_harvest_date, seed_type, seed_supplier, fertilizer_used,
-                 irrigation_method, current_stage, notes, created_at, updated_at`,
-      [cropCycleId, stage]
-    );
+    const result = await db.transaction(async (tx) => {
+      const updated = await tx.query(
+        `UPDATE crop_cycles
+         SET current_stage = $2, updated_at = now()
+         WHERE id = $1
+         RETURNING id, farm_id, crop_name, variety, field_name, planting_date,
+                   expected_harvest_date, seed_type, seed_supplier, fertilizer_used,
+                   irrigation_method, current_stage, notes, created_at, updated_at`,
+        [cropCycleId, stage]
+      );
 
-    if (result.rowCount === 0) {
-      await client.query('ROLLBACK');
+      if (updated.rows.length === 0) return null;
+
+      await tx.query(
+        `INSERT INTO crop_events (crop_cycle_id, event_type, occurred_on, growth_stage, notes)
+         VALUES ($1, 'stage_updated', CURRENT_DATE, $2, $3)`,
+        [cropCycleId, stage, notes]
+      );
+      return updated.rows[0];
+    });
+
+    if (!result) {
       response.status(404).json({ error: 'Crop cycle not found.' });
       return;
     }
 
-    await client.query(
-      `INSERT INTO crop_events (crop_cycle_id, event_type, occurred_on, growth_stage, notes)
-       VALUES ($1, 'stage_updated', CURRENT_DATE, $2, $3)`,
-      [cropCycleId, stage, notes]
-    );
-    await client.query('COMMIT');
-    response.json(result.rows[0]);
+    response.json(result);
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
     next(error);
-  } finally {
-    client.release();
   }
 });
 
@@ -267,6 +235,8 @@ app.use((error, _request, response, _next) => {
   });
 });
 
+await initializeDatabase();
 app.listen(port, '127.0.0.1', () => {
-  console.log(`AgriConnect API listening on http://127.0.0.1:${port}`);
+  console.log(`Khula AI API listening on http://127.0.0.1:${port}`);
+  console.log(`Using local embedded PostgreSQL data in ${process.env.PGLITE_DATA_DIR || '.localdb'}.`);
 });

@@ -12,9 +12,9 @@
     "db:migrate": "node server/db/migrate.js"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "pg": "^8.16.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
