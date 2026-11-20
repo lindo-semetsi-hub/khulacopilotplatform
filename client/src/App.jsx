@@ -530,7 +530,7 @@ function OverviewPage({ user, farms, selectedFarm, cropCycles, activeCrops, data
           <p className="eyebrow">YOUR FARM, SEASON BY SEASON</p>
           <h2>Welcome to your growing season.</h2>
           <p>
-            Signed in as {user.email}. Your farm records are private to your account.
+            Signed in as {user.email}.
           </p>
         </div>
         <button className="button-primary welcome-action" onClick={() => onGoTo('crop-records')}>
