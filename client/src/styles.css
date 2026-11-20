@@ -1270,6 +1270,54 @@ button {
   margin: 0;
 }
 
+.bundle-group {
+  display: grid;
+  gap: 14px;
+}
+
+.bundle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bundle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 210px;
+}
+
+.bundle-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.bundle-card p {
+  margin: 7px 0 0;
+  font-size: 12px;
+}
+
+.bundle-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+.bundle-price span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.bundle-card .button-disabled {
+  width: 100%;
+}
+
 .premium-gate {
   display: grid;
   justify-items: start;
@@ -1497,6 +1545,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .bundle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .auth-page {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
     gap: 36px;
@@ -1602,6 +1654,15 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .bundle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bundle-group .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .weather-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1641,5 +1702,326 @@ button {
 
   .auth-panel {
     padding: 20px;
+  }
+}
+
+:root {
+  color-scheme: dark;
+  --khula-background: #0b0c09;
+  --khula-sidebar: #11130f;
+  --khula-surface: #171912;
+  --khula-raised: #20231a;
+  --khula-border: #35392d;
+  --khula-text: #f1f0e5;
+  --khula-muted: #a4aa9a;
+  --khula-yellow: #f2cf58;
+  --khula-green: #8db456;
+  --khula-green-soft: #26351f;
+  --khula-error: #ee9183;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  color: var(--khula-text);
+  background: var(--khula-background);
+}
+
+body .app-shell,
+body .main-area,
+body .auth-page {
+  color: var(--khula-text);
+  background: var(--khula-background);
+}
+
+body .app-shell :is(
+  .sidebar,
+  .panel,
+  .stat-card,
+  .quick-link-card,
+  .crop-card,
+  .lesson-card,
+  .plan-card,
+  .profile-card,
+  .farm-summary,
+  .weather-current,
+  .weather-day,
+  .assistant-messages,
+  .assistant-message:not(.user),
+  .assistant-privacy-note,
+  .assistant-key-notice,
+  .mini-feature,
+  .bundle-card
+),
+body .auth-panel {
+  color: var(--khula-text);
+  border-color: var(--khula-border);
+  background-color: var(--khula-surface);
+  box-shadow: 0 8px 26px rgb(0 0 0 / 24%);
+}
+
+body .app-shell :is(h1, h2, h3, p, span, strong, small, label, li, time, button, a, code),
+body .auth-page :is(h1, h2, h3, p, span, strong, small, label, li, time, button, a, code) {
+  color: var(--khula-text);
+}
+
+body .app-shell .sidebar {
+  border-right-color: var(--khula-border);
+  background: var(--khula-sidebar);
+}
+
+body .app-shell .topbar {
+  border-bottom-color: var(--khula-border);
+  background: rgb(17 19 15 / 94%);
+}
+
+body .app-shell .welcome-panel {
+  border-color: #39432c;
+  background: linear-gradient(120deg, #1d2719, #151711 76%);
+}
+
+body .app-shell :is(.weather-current, .weather-day, .assistant-messages, .assistant-privacy-note, .farm-summary, .nav-symbol, .auth-tabs) {
+  background-color: var(--khula-raised);
+}
+
+body .app-shell .activity-row {
+  border-top-color: var(--khula-border);
+  background: transparent;
+}
+
+body .app-shell .eyebrow,
+body .auth-page .eyebrow {
+  color: var(--khula-yellow);
+}
+
+body .app-shell :is(
+  .small-note,
+  .empty-note,
+  .optional,
+  .field-hint,
+  .sidebar-caption,
+  .nav-lock,
+  .account-details span,
+  .farm-summary p,
+  .crop-card-top p,
+  .page-heading > p:last-child,
+  .weather-day span,
+  .weather-metrics span,
+  .assistant-composer-footer span,
+  .bundle-card p
+),
+body .auth-page :is(.auth-footnote, .panel-intro, .field-hint) {
+  color: var(--khula-muted);
+}
+
+body .app-shell .brand,
+body .auth-page .brand {
+  color: var(--khula-yellow);
+}
+
+body .app-shell .brand-mark,
+body .auth-page .brand-mark {
+  color: #14150f;
+  background: var(--khula-yellow);
+}
+
+body .app-shell .nav-link {
+  color: var(--khula-muted);
+}
+
+body .app-shell .nav-link:hover {
+  color: var(--khula-green);
+  background: var(--khula-raised);
+}
+
+body .app-shell .quick-link-card:hover {
+  border-color: var(--khula-green);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .logout-button:hover {
+  color: var(--khula-error);
+  background: #2b1916;
+}
+
+body .app-shell .nav-link.active {
+  color: var(--khula-yellow);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .nav-link.active .nav-symbol {
+  color: #14150f;
+  background: var(--khula-yellow);
+}
+
+body .app-shell .nav-symbol,
+body .app-shell :is(.quick-link-icon, .feature-mark, .farm-avatar, .account-avatar, .assistant-avatar) {
+  color: var(--khula-green);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .assistant-avatar {
+  color: #14150f;
+  background: var(--khula-green);
+}
+
+body .app-shell :is(.topbar h1, .page-heading h2, .panel h2, .welcome-panel h2, .stat-card strong, .farm-size strong, .weather-temperature, .bundle-price) {
+  color: var(--khula-yellow);
+}
+
+body .app-shell .plan-badge {
+  border-color: var(--khula-border);
+  color: var(--khula-yellow);
+  background: var(--khula-raised);
+}
+
+body .app-shell .button-primary,
+body .auth-page .button-primary {
+  border: 1px solid var(--khula-yellow);
+  color: #14150f;
+  background: var(--khula-yellow);
+}
+
+body .app-shell .button-primary:hover:not(:disabled),
+body .auth-page .button-primary:hover:not(:disabled) {
+  border-color: var(--khula-green);
+  color: #11130d;
+  background: var(--khula-green);
+}
+
+body .app-shell :is(.button-secondary, .button-disabled),
+body .auth-page .button-secondary {
+  border-color: var(--khula-border);
+  color: var(--khula-green);
+  background: var(--khula-raised);
+}
+
+body .app-shell .button-secondary:hover {
+  border-color: var(--khula-green);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .button-disabled {
+  color: var(--khula-muted);
+}
+
+body .app-shell .status-chip,
+body .app-shell .stage-pill,
+body .app-shell .lesson-status {
+  border: 1px solid var(--khula-border);
+  color: var(--khula-green);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .assistant-ready {
+  color: var(--khula-green);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .assistant-needs-key,
+body .app-shell .assistant-key-notice {
+  border-color: #6a5a2c;
+  color: var(--khula-yellow);
+  background: #2a2516;
+}
+
+body .app-shell .assistant-message.user {
+  border-color: #46613a;
+  color: var(--khula-text);
+  background: #202b1b;
+}
+
+body .app-shell .assistant-message p,
+body .app-shell .assistant-message-meta,
+body .app-shell .assistant-message-meta strong {
+  color: var(--khula-text);
+}
+
+body .app-shell :is(input, select, textarea),
+body .auth-page :is(input, select, textarea) {
+  border-color: var(--khula-border);
+  color: var(--khula-text);
+  background: #10120e;
+}
+
+body :is(input, select, textarea)::placeholder {
+  color: #858c7d;
+}
+
+body :is(input, select, textarea):focus {
+  border-color: var(--khula-yellow);
+  box-shadow: 0 0 0 2px rgb(242 207 88 / 17%);
+}
+
+body .app-shell .farm-picker select,
+body .app-shell .stage-control select {
+  color: var(--khula-text);
+  background-color: var(--khula-raised);
+}
+
+body .auth-tabs {
+  background: var(--khula-raised);
+}
+
+body .auth-tab {
+  color: var(--khula-muted);
+}
+
+body .auth-tab.active {
+  color: var(--khula-yellow);
+  background: var(--khula-green-soft);
+}
+
+body .app-shell .feedback-error,
+body .auth-page .feedback-error {
+  border-color: #704138;
+  color: var(--khula-error);
+  background: #2b1916;
+}
+
+body .app-shell .feedback-success,
+body .auth-page .feedback-success {
+  border-color: #405d34;
+  color: var(--khula-green);
+  background: #1b2919;
+}
+
+body .app-shell :is(.assistant-error, .weather-error) {
+  color: var(--khula-error);
+}
+
+body .app-shell :is(.assistant-thinking, .weather-attribution a, .resend-link),
+body .auth-page .resend-link {
+  color: var(--khula-green);
+}
+
+body .app-shell .activity-dot {
+  background: var(--khula-green);
+  box-shadow: 0 0 0 4px var(--khula-green-soft);
+}
+
+body .app-shell .activity-dot.done {
+  background: #7d8578;
+}
+
+body .app-shell .account-card {
+  border-top-color: var(--khula-border);
+}
+
+body .app-shell .selected-plan {
+  border-color: var(--khula-yellow);
+  box-shadow: 0 0 0 1px rgb(242 207 88 / 22%);
+}
+
+@media (max-width: 900px) {
+  .bundle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .bundle-grid {
+    grid-template-columns: 1fr;
   }
 }

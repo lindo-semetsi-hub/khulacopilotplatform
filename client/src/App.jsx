@@ -37,6 +37,31 @@ const pageTitles = {
   subscription: 'Plans and access'
 };
 
+const bundleGroups = [
+  {
+    id: 'once-off',
+    eyebrow: 'ONCE-OFF',
+    title: 'One-time bundles',
+    description: 'Pay once. These bundles do not renew.',
+    offers: [
+      { name: '1.5GB Anytime Data', price: 'R34.99' },
+      { name: '5GB Anytime Data', detail: '40 minutes voice', price: 'R105' },
+      { name: '7GB Anytime Data', detail: '50 minutes voice', price: 'R149.99' }
+    ]
+  },
+  {
+    id: 'monthly',
+    eyebrow: 'RECURRING · MONTHLY',
+    title: 'Monthly bundles',
+    description: 'Recurring monthly bundle and voice allowance.',
+    offers: [
+      { name: '10GB Anytime Data', detail: '80 minutes voice', price: 'R199.99' },
+      { name: '15GB Anytime Data', detail: '100 minutes voice', price: 'R239.99' },
+      { name: '20GB Anytime Data', detail: '100 minutes voice', price: 'R309.99' }
+    ]
+  }
+];
+
 const initialFarmForm = {
   name: '',
   ownerName: '',
@@ -810,32 +835,47 @@ function BundlesPage({ subscription, onViewPlans }) {
       <section className="page-heading">
         <p className="eyebrow">CONNECTIVITY</p>
         <h2>MTN Data Bundles</h2>
-        <p>Bundle availability will be matched to the subscription on your account.</p>
+        <p>Compare once-off and monthly MTN data bundles for your farm team.</p>
       </section>
-      <section className="panel feature-notice">
-        <span className="feature-mark">MTN</span>
-        <div>
-          <p className="eyebrow">BUNDLE CATALOGUE PREVIEW</p>
-          <h3>{subscription === 'premium' ? 'Premium bundle options' : 'Basic bundle options'}</h3>
-          <p>MTN bundle sizes, prices, and eligibility have not been configured yet.</p>
-          <p className="small-note">
-            No purchases are processed here. A payment provider and MTN bundle catalogue
-            must be configured before checkout can be enabled.
-          </p>
-        </div>
-      </section>
+      {bundleGroups.map((group) => (
+        <section className="bundle-group" key={group.id}>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">{group.eyebrow}</p>
+              <h2>{group.title}</h2>
+            </div>
+            <span className="small-note">{group.description}</span>
+          </div>
+          <div className="bundle-grid">
+            {group.offers.map((offer) => (
+              <article className="panel bundle-card" key={offer.name}>
+                <div>
+                  <h3>{offer.name}</h3>
+                  <p>{offer.detail || 'Data only'}</p>
+                </div>
+                <strong className="bundle-price">
+                  {offer.price}
+                  {group.id === 'monthly' && <span>/ month</span>}
+                </strong>
+                <button className="button-disabled" disabled>
+                  Purchases unavailable
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
       <div className="two-card-grid">
         <section className="panel mini-feature">
           <p className="eyebrow">CURRENT SUBSCRIPTION</p>
           <h3>{subscription === 'premium' ? 'Premium' : 'Basic'}</h3>
-          <p>Bundle offers will be displayed here once the plan-specific catalogue is agreed.</p>
+          <p>Plan-specific bundle eligibility has not been configured yet.</p>
           <button className="button-secondary" onClick={onViewPlans}>View plan access</button>
         </section>
         <section className="panel mini-feature">
           <p className="eyebrow">PURCHASE STATUS</p>
-          <h3>Checkout not connected</h3>
-          <p>There is no payment gateway, authorization, or charge in this prototype.</p>
-          <button className="button-disabled" disabled>Purchases unavailable</button>
+          <h3>Checkout is not connected</h3>
+          <p>These prices are displayed for your catalogue. Payments and MTN bundle delivery are not active yet, and no charges are taken.</p>
         </section>
       </div>
     </div>
