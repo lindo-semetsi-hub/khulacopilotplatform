@@ -44,9 +44,9 @@ const bundleGroups = [
     title: 'One-time bundles',
     description: 'Pay once. These bundles do not renew.',
     offers: [
-      { name: '1.5GB Anytime Data', price: 'R34.99' },
-      { name: '5GB Anytime Data', detail: '40 minutes voice', price: 'R105' },
-      { name: '7GB Anytime Data', detail: '50 minutes voice', price: 'R149.99' }
+      { id: 'once_1_5gb', name: '1.5GB Anytime Data', price: 'R34.99' },
+      { id: 'once_5gb_40min', name: '5GB Anytime Data', detail: '40 minutes voice', price: 'R105' },
+      { id: 'once_7gb_50min', name: '7GB Anytime Data', detail: '50 minutes voice', price: 'R149.99' }
     ]
   },
   {
@@ -55,9 +55,9 @@ const bundleGroups = [
     title: 'Monthly bundles',
     description: 'Recurring monthly bundle and voice allowance.',
     offers: [
-      { name: '10GB Anytime Data', detail: '80 minutes voice', price: 'R199.99' },
-      { name: '15GB Anytime Data', detail: '100 minutes voice', price: 'R239.99' },
-      { name: '20GB Anytime Data', detail: '100 minutes voice', price: 'R309.99' }
+      { id: 'monthly_10gb_80min', name: '10GB Anytime Data', detail: '80 minutes voice', price: 'R199.99' },
+      { id: 'monthly_15gb_100min', name: '15GB Anytime Data', detail: '100 minutes voice', price: 'R239.99' },
+      { id: 'monthly_20gb_100min', name: '20GB Anytime Data', detail: '100 minutes voice', price: 'R309.99' }
     ]
   }
 ];
@@ -133,6 +133,8 @@ function App() {
   const [initialAuthError, setInitialAuthError] = useState('');
   const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
   const [assistantAvailable, setAssistantAvailable] = useState(false);
+  const [payfastConfigured, setPayfastConfigured] = useState(false);
+  const [payfastCheckoutAvailable, setPayfastCheckoutAvailable] = useState(false);
   const [activePage, setActivePage] = useState('overview');
   const [farms, setFarms] = useState([]);
   const [selectedFarmId, setSelectedFarmId] = useState('');
@@ -156,6 +158,8 @@ function App() {
         if (active) {
           setEmailVerificationRequired(serverStatus.emailVerificationRequired);
           setAssistantAvailable(serverStatus.assistantConfigured);
+          setPayfastConfigured(serverStatus.payfastConfigured);
+          setPayfastCheckoutAvailable(serverStatus.payfastCheckoutAvailable);
         }
         if (verificationToken) {
           window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
@@ -169,7 +173,12 @@ function App() {
           }
         } else {
           const authenticatedUser = await apiRequest('/api/auth/me');
-          if (active) setUser(authenticatedUser);
+          if (active) {
+            setUser(authenticatedUser);
+            if (new URLSearchParams(window.location.search).has('bundle_order')) {
+              setActivePage('bundles');
+            }
+          }
         }
       } catch (requestError) {
         if (active) setInitialAuthError(requestError.message);
@@ -355,6 +364,9 @@ function App() {
           setInitialAuthError('');
           setError('');
           setUser(authenticatedUser);
+          if (new URLSearchParams(window.location.search).has('bundle_order')) {
+            setActivePage('bundles');
+          }
         }}
       />
     );
@@ -479,7 +491,14 @@ function App() {
               updatingCycleId={updatingCycleId}
             />
           ) : activePage === 'bundles' ? (
-            <BundlesPage subscription={user.subscription} onViewPlans={() => setActivePage('subscription')} />
+            <BundlesPage
+              subscription={user.subscription}
+              userMobile={user.mobileNumber}
+              isBundleAdmin={user.isBundleAdmin}
+              payfastConfigured={payfastConfigured}
+              payfastCheckoutAvailable={payfastCheckoutAvailable}
+              onViewPlans={() => setActivePage('subscription')}
+            />
           ) : activePage === 'learning' ? (
             <LearningPage />
           ) : activePage === 'weather' ? (
@@ -841,13 +860,152 @@ function CropRecordsPage({
   );
 }
 
-function BundlesPage({ subscription, onViewPlans }) {
+function BundlesPage({
+  subscription,
+  userMobile,
+  isBundleAdmin,
+  payfastConfigured,
+  payfastCheckoutAvailable,
+  onViewPlans
+}) {
+  const [orders, setOrders] = useState([]);
+  const [fulfillmentQueue, setFulfillmentQueue] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [checkoutBundleId, setCheckoutBundleId] = useState('');
+  const [fulfillmentUpdatingId, setFulfillmentUpdatingId] = useState('');
+  const [checkoutError, setCheckoutError] = useState('');
+  const [returnNotice, setReturnNotice] = useState('');
+  const [recipientMobile, setRecipientMobile] = useState(userMobile || '');
+  const returnedOrderId = new URLSearchParams(window.location.search).get('bundle_order');
+  const paymentReturn = new URLSearchParams(window.location.search).get('payment_return');
+  const returnedOrderIsPaid = orders.some(
+    (order) => order.id === returnedOrderId && order.paymentStatus === 'paid'
+  );
+  const feedbackClass = checkoutError || paymentReturn === 'cancelled'
+    ? 'feedback-error'
+    : returnedOrderIsPaid
+      ? 'feedback-success'
+      : 'feedback-warning';
+
+  useEffect(() => {
+    let active = true;
+    setOrdersLoading(true);
+    setCheckoutError('');
+    Promise.all([
+      apiRequest('/api/bundle-orders'),
+      isBundleAdmin ? apiRequest('/api/admin/bundle-orders') : Promise.resolve([])
+    ])
+      .then(([rows, queue]) => {
+        if (!active) return;
+        setOrders(rows);
+        setFulfillmentQueue(queue);
+      })
+      .catch((requestError) => {
+        if (active) setCheckoutError(requestError.message);
+      })
+      .finally(() => {
+        if (active) setOrdersLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isBundleAdmin, refreshKey]);
+
+  useEffect(() => {
+    if (!returnedOrderId) return;
+    if (paymentReturn === 'cancelled') {
+      setReturnNotice('Checkout was cancelled. No payment confirmation was received.');
+      return;
+    }
+
+    const returnedOrder = orders.find((order) => order.id === returnedOrderId);
+    setReturnNotice(
+      returnedOrder?.paymentStatus === 'paid'
+        ? 'Payment confirmed. MTN bundle delivery is pending manual fulfillment.'
+        : 'You returned from PayFast. Khula AI is waiting for its verified payment notification; refresh the order status shortly.'
+    );
+  }, [orders, paymentReturn, returnedOrderId]);
+
+  async function handlePurchase(offer) {
+    setCheckoutBundleId(offer.id);
+    setCheckoutError('');
+
+    try {
+      const checkout = await apiRequest('/api/bundle-orders', {
+        method: 'POST',
+        body: JSON.stringify({ bundleId: offer.id, recipientMobile })
+      });
+      const checkoutUrl = new URL(checkout.actionUrl);
+      const allowedCheckoutUrls = [
+        'https://sandbox.payfast.co.za/eng/process',
+        'https://www.payfast.co.za/eng/process'
+      ];
+      if (!allowedCheckoutUrls.includes(checkoutUrl.toString()) || !checkout.fields) {
+        throw new Error('PayFast returned an invalid checkout destination.');
+      }
+
+      async function handleMarkFulfilled(paymentId) {
+        setFulfillmentUpdatingId(paymentId);
+        setCheckoutError('');
+        try {
+          await apiRequest(`/api/admin/bundle-order-payments/${paymentId}/fulfillment`, {
+            method: 'PATCH'
+          });
+          setRefreshKey((current) => current + 1);
+        } catch (requestError) {
+          setCheckoutError(requestError.message);
+        } finally {
+          setFulfillmentUpdatingId('');
+        }
+      }
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = checkoutUrl.toString();
+      form.hidden = true;
+      for (const [name, value] of Object.entries(checkout.fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = String(value);
+        form.append(input);
+      }
+      document.body.append(form);
+      form.submit();
+    } catch (requestError) {
+      setCheckoutError(requestError.message);
+      setCheckoutBundleId('');
+    }
+  }
+
   return (
     <div className="content-stack">
       <section className="page-heading">
         <p className="eyebrow">CONNECTIVITY</p>
         <h2>MTN Data Bundles</h2>
-        <p>Compare once-off and monthly MTN data bundles for your farm team.</p>
+        <p>Choose a bundle and pay securely through PayFast.</p>
+      </section>
+      {(checkoutError || returnNotice) && (
+        <div className={`feedback ${feedbackClass}`} role="status">
+          {checkoutError || returnNotice}
+        </div>
+      )}
+      <section className="panel bundle-recipient">
+        <label>
+          MTN number to receive the bundle
+          <input
+            type="tel"
+            autoComplete="tel"
+            value={recipientMobile}
+            onChange={(event) => setRecipientMobile(event.target.value)}
+            placeholder="+27 82 123 4567"
+          />
+        </label>
+        <p className="small-note">
+          Your account mobile number is prefilled. You can change it if the bundle is for another South African number.
+        </p>
       </section>
       {bundleGroups.map((group) => (
         <section className="bundle-group" key={group.id}>
@@ -860,7 +1018,7 @@ function BundlesPage({ subscription, onViewPlans }) {
           </div>
           <div className="bundle-grid">
             {group.offers.map((offer) => (
-              <article className="panel bundle-card" key={offer.name}>
+              <article className="panel bundle-card" key={offer.id}>
                 <div>
                   <h3>{offer.name}</h3>
                   <p>{offer.detail || 'Data only'}</p>
@@ -869,8 +1027,16 @@ function BundlesPage({ subscription, onViewPlans }) {
                   {offer.price}
                   {group.id === 'monthly' && <span>/ month</span>}
                 </strong>
-                <button className="button-disabled" disabled>
-                  Purchases unavailable
+                <button
+                  className={payfastCheckoutAvailable ? 'button-primary' : 'button-disabled'}
+                  disabled={!payfastCheckoutAvailable || Boolean(checkoutBundleId)}
+                  onClick={() => handlePurchase(offer)}
+                >
+                  {checkoutBundleId === offer.id
+                    ? 'Opening PayFast...'
+                    : group.id === 'monthly'
+                      ? 'Subscribe with PayFast'
+                      : 'Buy with PayFast'}
                 </button>
               </article>
             ))}
@@ -886,10 +1052,116 @@ function BundlesPage({ subscription, onViewPlans }) {
         </section>
         <section className="panel mini-feature">
           <p className="eyebrow">PURCHASE STATUS</p>
-          <h3>Checkout is not connected</h3>
-          <p>These prices are displayed for your catalogue. Payments and MTN bundle delivery are not active yet, and no charges are taken.</p>
+          <h3>
+            {!payfastConfigured
+              ? 'Set up PayFast checkout'
+              : payfastCheckoutAvailable
+                ? 'PayFast sandbox ready'
+                : 'Live checkout is disabled'}
+          </h3>
+          <p>
+            {!payfastConfigured
+              ? 'Add PayFast sandbox settings to the server .env file, then restart the API. See .env.example for the variable names.'
+              : payfastCheckoutAvailable
+                ? 'Sandbox payments are verified by the server before an order is marked paid.'
+                : 'Live payments are blocked until seller order management and customer cancellation are ready.'}
+          </p>
+          <p>Paid bundles are not sent automatically; fulfill them manually and record delivery in the admin queue.</p>
         </section>
       </div>
+      {isBundleAdmin && (
+        <section className="panel bundle-orders">
+          <div className="bundle-orders-heading">
+            <div>
+              <p className="eyebrow">ADMIN</p>
+              <h3>Manual fulfillment queue</h3>
+            </div>
+          </div>
+          {ordersLoading && !fulfillmentQueue.length ? (
+            <p className="empty-note">Loading payments to fulfill...</p>
+          ) : fulfillmentQueue.length ? (
+            <div className="bundle-order-list">
+              {fulfillmentQueue.map((payment) => (
+                <article className="bundle-order" key={payment.paymentId}>
+                  <div className="bundle-order-summary">
+                    <div>
+                      <strong>{payment.bundleName}</strong>
+                      <p>
+                        {new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' })
+                          .format(payment.amountCents / 100)}
+                        {payment.recurring ? ' · monthly subscription' : ' · once-off'}
+                      </p>
+                      <p>{payment.customerEmail} · Recipient: {payment.recipientMobile}</p>
+                    </div>
+                    <button
+                      className="button-primary"
+                      disabled={fulfillmentUpdatingId === payment.paymentId}
+                      onClick={() => handleMarkFulfilled(payment.paymentId)}
+                    >
+                      {fulfillmentUpdatingId === payment.paymentId
+                        ? 'Saving...'
+                        : 'Mark delivered'}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-note">No paid bundles are waiting for delivery.</p>
+          )}
+        </section>
+      )}
+      <section className="panel bundle-orders">
+        <div className="bundle-orders-heading">
+          <div>
+            <p className="eyebrow">PURCHASE HISTORY</p>
+            <h3>Your bundle orders</h3>
+          </div>
+          <button
+            className="button-secondary"
+            disabled={ordersLoading}
+            onClick={() => setRefreshKey((current) => current + 1)}
+          >
+            {ordersLoading ? 'Refreshing...' : 'Refresh status'}
+          </button>
+        </div>
+        {ordersLoading && !orders.length ? (
+          <p className="empty-note">Loading your orders...</p>
+        ) : orders.length ? (
+          <div className="bundle-order-list">
+            {orders.map((order) => (
+              <article className="bundle-order" key={order.id}>
+                <div className="bundle-order-summary">
+                  <div>
+                    <strong>{order.bundleName}</strong>
+                    <p>
+                      {new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' })
+                        .format(order.amountCents / 100)}
+                      {order.recurring ? ' · monthly subscription' : ' · once-off'}
+                    </p>
+                    <p>Recipient: {order.recipientMobile}</p>
+                  </div>
+                  <span className="status-chip">
+                    {order.paymentStatus === 'paid' ? 'Payment confirmed' : 'Awaiting payment'}
+                  </span>
+                </div>
+                {order.payments.map((payment) => (
+                  <p className="bundle-fulfillment-status" key={`${order.id}-${payment.createdAt}`}>
+                    {payment.fulfillmentStatus === 'fulfilled'
+                      ? 'Bundle marked as delivered.'
+                      : 'Paid · waiting for manual MTN fulfillment.'}
+                  </p>
+                ))}
+                {order.paymentStatus !== 'paid' && (
+                  <p className="small-note">A return from PayFast alone does not confirm payment.</p>
+                )}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-note">No bundle orders yet.</p>
+        )}
+      </section>
     </div>
   );
 }

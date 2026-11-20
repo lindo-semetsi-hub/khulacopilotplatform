@@ -63,12 +63,31 @@ TLS verification.
   `OPENAI_MODEL` defaults to `gpt-6-luna` and can be changed there. Keep the key
   on the server and never commit or paste it into chat. OpenAI API usage may
   incur charges.
-- Learning, Marketplace, MTN bundle pricing/availability, and image-based
-  disease detection remain previews; no provider is connected for those features.
+- Learning, Marketplace, and image-based disease detection remain previews.
+  PayFast-hosted sandbox checkout is implemented for the MTN bundle catalogue,
+  but remains unavailable until server credentials and a public HTTPS
+  notification URL are configured.
+- Set `PAYFAST_MODE=sandbox`, `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY`,
+  `PAYFAST_PASSPHRASE`, and `PAYFAST_NOTIFY_URL` in the server `.env`
+  file. PayFast must be able to reach the notification URL; use a public HTTPS
+  tunnel when testing locally. Keep the passphrase private in `.env`; never
+  commit or paste it into chat.
+- The server verifies PayFast signatures and validates each notification with
+  PayFast before marking an order paid. The return page is not treated as proof
+  of payment. Paid orders remain pending manual MTN delivery; there is no
+  automatic MTN fulfillment integration. The buyer selects the South African
+  mobile number for the bundle. Set `BUNDLE_ADMIN_EMAIL` to the operator's
+  account email to show the protected manual fulfillment queue. All live
+  payments are blocked until customer cancellation is supported.
 - No sample data is inserted.
 
-There is no phone verification, payment gateway, or Premium checkout. New users
-receive Basic, and Premium-only pages remain locked until billing is designed
-and implemented. The local development email-verification bypass is not an
-identity check and must not be used as a production policy. A future switch to
-a shared PostgreSQL server will require migrating the local data to that server.
+There is no phone verification or Premium checkout. New users receive Basic,
+and Premium-only pages remain locked until billing is designed and implemented.
+The local development email-verification bypass is not an identity check and
+must not be used as a production policy. A future switch to a shared PostgreSQL
+server will require migrating the local data to that server.
+
+Run the focused payment integration tests with `npm test`. Do not enable live
+PayFast payments until a verified merchant account, public HTTPS application
+and notification URLs, seller order management, and manual MTN delivery and
+recurring cancellation processes are in place.

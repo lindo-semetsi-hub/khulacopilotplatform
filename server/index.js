@@ -1,8 +1,21 @@
 import 'dotenv/config';
-import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
+import {
+  createHash,
+  randomBytes,
+  randomUUID,
+  scrypt as scryptCallback,
+  timingSafeEqual
+} from 'node:crypto';
 import express from 'express';
 import { promisify } from 'node:util';
 import { db, initializeDatabase } from './db/index.js';
+import {
+  bundleCatalog,
+  createPayFastCheckout,
+  isPayFastConfigured,
+  isPayFastCheckoutAvailable,
+  validatePayFastNotification
+} from './payfast.js';
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
@@ -30,6 +43,7 @@ const assistantAttemptLimit = 10;
 const assistantAttempts = new Map();
 
 app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10kb', parameterLimit: 30 }));
 
 function requiredText(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -40,6 +54,23 @@ function requiredText(value, label) {
 
 function optionalText(value) {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+}
+
+function amountToCents(value) {
+  if (typeof value !== 'string') return null;
+  const match = value.trim().match(/^(\d+)(?:\.(\d{1,2}))?$/);
+  if (!match) return null;
+  return Number(match[1]) * 100 + Number((match[2] || '').padEnd(2, '0'));
+}
+
+function normalizeMtnRecipientNumber(value) {
+  if (typeof value !== 'string') return null;
+  const number = value.replace(/[\s().-]/g, '');
+  if (/^0[6-8]\d{8}$/.test(number)) return `+27${number.slice(1)}`;
+  if (/^\+?27[6-8]\d{8}$/.test(number)) {
+    return number.startsWith('+') ? number : `+${number}`;
+  }
+  return null;
 }
 
 async function fetchWeatherProvider(url, provider) {
@@ -350,12 +381,14 @@ function hashSessionToken(token) {
 }
 
 function safeUser(row) {
+  const bundleAdminEmail = process.env.BUNDLE_ADMIN_EMAIL?.trim().toLowerCase();
   return {
     id: row.id,
     email: row.email,
     mobileNumber: row.mobile_number,
     subscription: row.subscription,
     emailVerified: row.email_verified,
+    isBundleAdmin: Boolean(bundleAdminEmail && row.email.toLowerCase() === bundleAdminEmail),
     createdAt: row.created_at
   };
 }
@@ -518,6 +551,14 @@ async function requireAuth(request, response, next) {
   } catch (error) {
     next(error);
   }
+}
+
+function requireBundleAdmin(request, response, next) {
+  if (!request.user.isBundleAdmin) {
+    response.status(403).json({ error: 'You do not have permission to manage bundle fulfillment.' });
+    return;
+  }
+  next();
 }
 
 app.post('/api/auth/register', limitAuthAttempts, async (request, response, next) => {
@@ -781,8 +822,229 @@ app.get('/api/health', async (_request, response, next) => {
       status: 'ok',
       database: 'connected',
       emailVerificationRequired,
-      assistantConfigured: Boolean(process.env.OPENAI_API_KEY?.trim())
+      assistantConfigured: Boolean(process.env.OPENAI_API_KEY?.trim()),
+      payfastConfigured: isPayFastConfigured(),
+      payfastCheckoutAvailable: isPayFastCheckoutAvailable()
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/bundle-orders', requireAuth, async (request, response, next) => {
+  try {
+    const body = request.body || {};
+    const bundleId = requiredText(body.bundleId, 'Bundle');
+    const bundle = bundleCatalog[bundleId];
+    if (!bundle) {
+      response.status(400).json({ error: 'Select a valid bundle.' });
+      return;
+    }
+    const recipientMobile = normalizeMtnRecipientNumber(body.recipientMobile);
+    if (!recipientMobile) {
+      response.status(400).json({
+        error: 'Enter a South African mobile number to receive the MTN bundle.'
+      });
+      return;
+    }
+
+    const orderId = randomUUID();
+    const checkout = createPayFastCheckout({
+      bundle,
+      orderId,
+      email: request.user.email
+    });
+    await db.query(
+      `INSERT INTO bundle_orders
+         (id, user_id, bundle_id, bundle_name, recipient_mobile, amount_cents, recurring)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        orderId,
+        request.user.id,
+        bundleId,
+        bundle.name,
+        recipientMobile,
+        bundle.amountCents,
+        bundle.recurring
+      ]
+    );
+
+    response.status(201).json({ orderId, ...checkout });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/bundle-orders', requireAuth, async (request, response, next) => {
+  try {
+    const result = await db.query(
+      `SELECT o.id, o.bundle_id, o.bundle_name, o.recipient_mobile,
+              o.amount_cents, o.recurring,
+              o.payment_status, o.created_at,
+              p.id AS payment_id, p.amount_cents AS payment_amount_cents,
+              p.fulfillment_status, p.created_at AS payment_created_at
+       FROM bundle_orders o
+       LEFT JOIN bundle_order_payments p ON p.order_id = o.id
+       WHERE o.user_id = $1
+       ORDER BY o.created_at DESC, p.created_at DESC
+       LIMIT 100`,
+      [request.user.id]
+    );
+
+    const orders = new Map();
+    for (const row of result.rows) {
+      if (!orders.has(row.id)) {
+        orders.set(row.id, {
+          id: row.id,
+          bundleId: row.bundle_id,
+          bundleName: row.bundle_name,
+          recipientMobile: row.recipient_mobile,
+          amountCents: row.amount_cents,
+          recurring: row.recurring,
+          paymentStatus: row.payment_status,
+          createdAt: row.created_at,
+          payments: []
+        });
+      }
+      if (row.payment_id) {
+        orders.get(row.id).payments.push({
+          amountCents: row.payment_amount_cents,
+          fulfillmentStatus: row.fulfillment_status,
+          createdAt: row.payment_created_at
+        });
+      }
+    }
+
+    response.json([...orders.values()]);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/admin/bundle-orders', requireAuth, requireBundleAdmin, async (_request, response, next) => {
+  try {
+    const result = await db.query(
+      `SELECT p.id AS payment_id, p.amount_cents, p.created_at AS paid_at,
+              o.bundle_name, o.recipient_mobile, o.recurring, u.email AS customer_email
+       FROM bundle_order_payments p
+       JOIN bundle_orders o ON o.id = p.order_id
+       JOIN users u ON u.id = o.user_id
+       WHERE p.fulfillment_status = 'pending'
+       ORDER BY p.created_at ASC
+       LIMIT 100`
+    );
+    response.json(result.rows.map((row) => ({
+      paymentId: row.payment_id,
+      bundleName: row.bundle_name,
+      recipientMobile: row.recipient_mobile,
+      recurring: row.recurring,
+      amountCents: row.amount_cents,
+      customerEmail: row.customer_email,
+      paidAt: row.paid_at
+    })));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch(
+  '/api/admin/bundle-order-payments/:paymentId/fulfillment',
+  requireAuth,
+  requireBundleAdmin,
+  async (request, response, next) => {
+    try {
+      if (!uuidPattern.test(request.params.paymentId)) {
+        response.status(400).json({ error: 'Invalid bundle payment.' });
+        return;
+      }
+
+      const result = await db.query(
+        `UPDATE bundle_order_payments
+         SET fulfillment_status = 'fulfilled'
+         WHERE id = $1
+         RETURNING id`,
+        [request.params.paymentId]
+      );
+      if (!result.rows.length) {
+        response.status(404).json({ error: 'Bundle payment was not found.' });
+        return;
+      }
+      response.json({ fulfillmentStatus: 'fulfilled' });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+app.post('/api/payments/payfast/notify', async (request, response, next) => {
+  try {
+    const fields = request.body;
+    const configuredMerchantId = process.env.PAYFAST_MERCHANT_ID?.trim();
+    if (
+      !fields ||
+      typeof fields !== 'object' ||
+      fields.merchant_id !== configuredMerchantId ||
+      typeof fields.m_payment_id !== 'string' ||
+      !uuidPattern.test(fields.m_payment_id)
+    ) {
+      response.status(400).send('Invalid PayFast notification.');
+      return;
+    }
+
+    const orderResult = await db.query(
+      'SELECT id, amount_cents FROM bundle_orders WHERE id = $1',
+      [fields.m_payment_id]
+    );
+    const order = orderResult.rows[0];
+    if (!order || amountToCents(fields.amount_gross) !== order.amount_cents) {
+      response.status(400).send('Invalid PayFast notification.');
+      return;
+    }
+
+    if (!(await validatePayFastNotification(fields))) {
+      response.status(400).send('PayFast notification validation failed.');
+      return;
+    }
+
+    if (fields.payment_status === 'COMPLETE') {
+      const providerPaymentId = optionalText(fields.pf_payment_id);
+      if (!providerPaymentId) {
+        response.status(400).send('Invalid PayFast notification.');
+        return;
+      }
+
+      const existingPayment = await db.query(
+        `SELECT order_id, amount_cents
+         FROM bundle_order_payments
+         WHERE provider_payment_id = $1`,
+        [providerPaymentId]
+      );
+      if (
+        existingPayment.rows.length &&
+        (
+          existingPayment.rows[0].order_id !== order.id ||
+          existingPayment.rows[0].amount_cents !== order.amount_cents
+        )
+      ) {
+        response.status(400).send('PayFast payment does not match the order.');
+        return;
+      }
+
+      await db.query(
+        `INSERT INTO bundle_order_payments (order_id, provider_payment_id, amount_cents)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (provider_payment_id) DO NOTHING`,
+        [order.id, providerPaymentId, order.amount_cents]
+      );
+      await db.query(
+        `UPDATE bundle_orders
+         SET payment_status = 'paid', updated_at = now()
+         WHERE id = $1`,
+        [order.id]
+      );
+    }
+
+    response.status(200).send('OK');
   } catch (error) {
     next(error);
   }

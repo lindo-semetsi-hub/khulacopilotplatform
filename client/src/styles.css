@@ -1991,6 +1991,12 @@ body .auth-page .feedback-success {
   background: #eff7eb;
 }
 
+body .app-shell .feedback-warning {
+  border-color: #e3d39c;
+  color: #6c5710;
+  background: #fff8df;
+}
+
 body .app-shell :is(.assistant-error, .weather-error) {
   color: var(--khula-error);
 }
@@ -2048,6 +2054,63 @@ body .app-shell .button-disabled {
   background: #eceee9;
 }
 
+.bundle-orders-heading,
+.bundle-order-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bundle-recipient {
+  display: grid;
+  gap: 8px;
+}
+
+.bundle-recipient label {
+  max-width: 440px;
+}
+
+.bundle-recipient .small-note {
+  margin: 0;
+}
+
+.bundle-orders-heading h3 {
+  margin: 0;
+}
+
+.bundle-order-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.bundle-order {
+  padding: 16px;
+  border: 1px solid var(--khula-border);
+  border-radius: 12px;
+  background: var(--khula-surface);
+}
+
+.bundle-order-summary strong {
+  color: var(--khula-text);
+}
+
+.bundle-order-summary p,
+.bundle-fulfillment-status {
+  margin: 6px 0 0;
+  color: var(--khula-muted);
+  font-size: 13px;
+}
+
+.bundle-fulfillment-status {
+  color: var(--khula-green);
+}
+
+.bundle-order .small-note {
+  margin: 8px 0 0;
+}
+
 @media (max-width: 900px) {
   .bundle-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2057,5 +2120,11 @@ body .app-shell .button-disabled {
 @media (max-width: 680px) {
   .bundle-grid {
     grid-template-columns: 1fr;
+  }
+
+  .bundle-orders-heading,
+  .bundle-order-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
