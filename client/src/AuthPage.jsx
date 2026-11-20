@@ -179,7 +179,7 @@ function AuthPage({ onAuthenticated, initialError, emailVerificationRequired }) 
         <p className="auth-footnote">
           {emailVerificationRequired
             ? 'Email verification is required before sign-in. Check your inbox for the one-time link; it expires after 24 hours.'
-            : 'Local development signs you in immediately. Email ownership is not verified until email delivery is configured for production.'}
+            : 'You can sign in as soon as your account is created.'}
         </p>
       </section>
     </main>

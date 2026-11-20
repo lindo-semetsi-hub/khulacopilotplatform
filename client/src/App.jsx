@@ -923,8 +923,8 @@ function BundlesPage({
     const returnedOrder = orders.find((order) => order.id === returnedOrderId);
     setReturnNotice(
       returnedOrder?.paymentStatus === 'paid'
-        ? 'Payment confirmed. MTN bundle delivery is pending manual fulfillment.'
-        : 'You returned from PayFast. Khula AI is waiting for its verified payment notification; refresh the order status shortly.'
+        ? 'Payment confirmed. Your MTN bundle is being prepared for delivery.'
+        : 'Your payment is awaiting confirmation. Refresh the order status shortly.'
     );
   }, [orders, paymentReturn, returnedOrderId]);
 
@@ -1047,26 +1047,25 @@ function BundlesPage({
         <section className="panel mini-feature">
           <p className="eyebrow">CURRENT SUBSCRIPTION</p>
           <h3>{subscription === 'premium' ? 'Premium' : 'Basic'}</h3>
-          <p>Plan-specific bundle eligibility has not been configured yet.</p>
           <button className="button-secondary" onClick={onViewPlans}>View plan access</button>
         </section>
         <section className="panel mini-feature">
-          <p className="eyebrow">PURCHASE STATUS</p>
+          <p className="eyebrow">PAYMENT INFORMATION</p>
           <h3>
             {!payfastConfigured
-              ? 'Set up PayFast checkout'
+              ? 'Checkout temporarily unavailable'
               : payfastCheckoutAvailable
-                ? 'PayFast sandbox ready'
-                : 'Live checkout is disabled'}
+                ? 'Test-mode checkout'
+                : 'Live payments are paused'}
           </h3>
           <p>
             {!payfastConfigured
-              ? 'Add PayFast sandbox settings to the server .env file, then restart the API. See .env.example for the variable names.'
+              ? 'Online checkout is temporarily unavailable while secure payment processing is prepared. No payment will be taken.'
               : payfastCheckoutAvailable
-                ? 'Sandbox payments are verified by the server before an order is marked paid.'
-                : 'Live payments are blocked until seller order management and customer cancellation are ready.'}
+                ? 'This checkout uses test payments. Live payments are paused while we prepare reliable order handling and monthly subscription cancellation.'
+                : 'Live payments are paused while we prepare reliable order handling and monthly subscription cancellation. No live payment will be taken.'}
           </p>
-          <p>Paid bundles are not sent automatically; fulfill them manually and record delivery in the admin queue.</p>
+          <p>Bundle delivery is arranged after payment is confirmed.</p>
         </section>
       </div>
       {isBundleAdmin && (
@@ -1149,11 +1148,11 @@ function BundlesPage({
                   <p className="bundle-fulfillment-status" key={`${order.id}-${payment.createdAt}`}>
                     {payment.fulfillmentStatus === 'fulfilled'
                       ? 'Bundle marked as delivered.'
-                      : 'Paid · waiting for manual MTN fulfillment.'}
+                      : 'Payment confirmed · bundle delivery is being arranged.'}
                   </p>
                 ))}
                 {order.paymentStatus !== 'paid' && (
-                  <p className="small-note">A return from PayFast alone does not confirm payment.</p>
+                  <p className="small-note">Your order will update once payment is confirmed.</p>
                 )}
               </article>
             ))}
@@ -1178,7 +1177,7 @@ function LearningPage() {
     },
     {
       title: 'Integrated pest management',
-      description: 'A preview of monitoring, prevention, and safe decision-making before treatment.'
+      description: 'Monitor crops regularly, prevent common pest problems, and choose safe responses before treatment.'
     }
   ];
   return (
@@ -1186,16 +1185,15 @@ function LearningPage() {
       <section className="page-heading">
         <p className="eyebrow">PREMIUM LEARNING</p>
         <h2>Learning hub</h2>
-        <p>Short, practical lessons for modern crop farming. This is a content preview.</p>
+        <p>Short, practical lessons for modern crop farming.</p>
       </section>
       <div className="lesson-grid">
         {lessons.map((lesson, index) => (
           <article className="panel lesson-card" key={lesson.title}>
             <span className="lesson-number">0{index + 1}</span>
-            <p className="eyebrow">CROP FARMING · PREVIEW</p>
+            <p className="eyebrow">CROP FARMING</p>
             <h3>{lesson.title}</h3>
             <p>{lesson.description}</p>
-            <span className="lesson-status">Lesson content coming later</span>
           </article>
         ))}
       </div>
@@ -1372,8 +1370,8 @@ function MarketplacePage() {
         <p>Connect crop producers with buyers and agricultural suppliers.</p>
       </section>
       <section className="panel empty-state">
-        <h3>Marketplace preview</h3>
-        <p>There are no live listings yet. Listings and contact details will appear when marketplace services are connected.</p>
+        <h3>Marketplace</h3>
+        <p>There are no listings to display right now.</p>
       </section>
     </div>
   );
@@ -1469,7 +1467,7 @@ function AssistantPage({ farm, cycles, assistantAvailable }) {
               <p>{farm.name} · {cycles.length} crop records</p>
             </div>
             <span className={`status-chip ${assistantAvailable ? 'assistant-ready' : 'assistant-needs-key'}`}>
-              {assistantAvailable ? 'OpenAI connected' : 'API key needed'}
+              {assistantAvailable ? 'Ready' : 'Temporarily unavailable'}
             </span>
           </div>
 
@@ -1479,7 +1477,7 @@ function AssistantPage({ farm, cycles, assistantAvailable }) {
 
           {!assistantAvailable && (
             <div className="assistant-key-notice" role="status">
-              Add <code>OPENAI_API_KEY</code> to the project’s local <code>.env</code> file, then restart <code>npm run dev</code> to enable replies. Never put the key in frontend code or share it in chat.
+              Khula AI is temporarily unavailable. Please try again later.
             </div>
           )}
 
@@ -1553,7 +1551,7 @@ function AssistantPage({ farm, cycles, assistantAvailable }) {
           </form>
 
           <p className="small-note assistant-disclaimer">
-            Crop guidance is informational, not a diagnosis or substitute for a local agricultural extension officer. Image analysis is not enabled.
+            Crop guidance is informational, not a diagnosis or substitute for a local agricultural extension officer.
           </p>
         </section>
       )}
@@ -1579,7 +1577,7 @@ function SubscriptionPage({ subscription }) {
       <section className="page-heading">
         <p className="eyebrow">SUBSCRIPTIONS</p>
         <h2>Plans and access</h2>
-        <p>Basic is available now. Premium access is shown as a preview until billing is configured.</p>
+        <p>Compare the features included with each subscription.</p>
       </section>
       <div className="plan-grid">
         <section className={`panel plan-card ${subscription === 'basic' ? 'selected-plan' : ''}`}>
@@ -1588,7 +1586,7 @@ function SubscriptionPage({ subscription }) {
           <p>Core crop tracking plus the features selected for Basic.</p>
           <ul>
             <li>Overview, farm profiles, and crop records</li>
-            <li>OpenAI crop copilot (requires API key setup)</li>
+            <li>AI crop assistant</li>
             <li>MTN Data Bundles catalogue</li>
             <li>Weather intelligence</li>
           </ul>
@@ -1606,7 +1604,7 @@ function SubscriptionPage({ subscription }) {
           {subscription === 'premium' ? (
             <span className="lesson-status">Your current plan</span>
           ) : (
-            <p className="small-note">Upgrade is unavailable until a payment provider and pricing are selected. No payment is taken.</p>
+            <p className="small-note">Premium upgrades are paused while secure billing and cancellation support are prepared. No payment will be taken.</p>
           )}
         </section>
       </div>
@@ -1659,7 +1657,7 @@ function ProfilePage({ user, emailVerificationRequired }) {
                 ? 'Verified'
                 : emailVerificationRequired
                   ? 'Not verified'
-                  : 'Not checked in local development'}
+                  : 'Not required'}
             </dd>
           </div>
         </dl>
