@@ -1329,7 +1329,6 @@ function WeatherPage({ farm, onSaveNearestTown, onSessionExpired }) {
                 </div>
                 <p className="small-note weather-attribution">
                   Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo.com</a> (CC BY 4.0).
-                  Prototype use only; a commercial plan is required before commercial launch.
                 </p>
               </section>
             </>
