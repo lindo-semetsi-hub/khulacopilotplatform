@@ -324,6 +324,14 @@ function App() {
     }
   }
 
+  function handleSessionExpired() {
+    setUser(null);
+    setActivePage('overview');
+    setError('');
+    setNotice('');
+    setInitialAuthError('Your session expired. Sign in again to continue.');
+  }
+
   function updateFarmForm(event) {
     const { name, value } = event.target;
     setFarmForm((current) => ({ ...current, [name]: value }));
@@ -475,7 +483,11 @@ function App() {
           ) : activePage === 'learning' ? (
             <LearningPage />
           ) : activePage === 'weather' ? (
-            <WeatherPage farm={selectedFarm} onSaveNearestTown={handleWeatherLocationSave} />
+            <WeatherPage
+              farm={selectedFarm}
+              onSaveNearestTown={handleWeatherLocationSave}
+              onSessionExpired={handleSessionExpired}
+            />
           ) : activePage === 'marketplace' ? (
             <MarketplacePage />
           ) : activePage === 'assistant' ? (
@@ -919,7 +931,7 @@ function LearningPage() {
   );
 }
 
-function WeatherPage({ farm, onSaveNearestTown }) {
+function WeatherPage({ farm, onSaveNearestTown, onSessionExpired }) {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
   const [savingTown, setSavingTown] = useState(false);
@@ -947,7 +959,8 @@ function WeatherPage({ farm, onSaveNearestTown }) {
       })
       .catch((requestError) => {
         if (active && requestError.name !== 'AbortError') {
-          setWeatherError(requestError.message);
+          if (requestError.status === 401) onSessionExpired();
+          else setWeatherError(requestError.message);
         }
       })
       .finally(() => {

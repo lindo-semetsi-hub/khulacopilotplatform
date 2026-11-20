@@ -7,6 +7,3 @@ CREATE TABLE IF NOT EXISTS email_verifications (
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-DELETE FROM auth_sessions
-WHERE user_id IN (SELECT id FROM users WHERE email_verified = FALSE);

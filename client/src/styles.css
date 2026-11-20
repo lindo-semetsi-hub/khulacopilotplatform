@@ -1706,18 +1706,18 @@ button {
 }
 
 :root {
-  color-scheme: dark;
-  --khula-background: #0b0c09;
-  --khula-sidebar: #11130f;
-  --khula-surface: #171912;
-  --khula-raised: #20231a;
-  --khula-border: #35392d;
-  --khula-text: #f1f0e5;
-  --khula-muted: #a4aa9a;
-  --khula-yellow: #f2cf58;
-  --khula-green: #8db456;
-  --khula-green-soft: #26351f;
-  --khula-error: #ee9183;
+  color-scheme: light;
+  --khula-background: #f5f6f2;
+  --khula-sidebar: #11120f;
+  --khula-surface: #fff;
+  --khula-raised: #f0f2ec;
+  --khula-border: #dce0d7;
+  --khula-text: #191b17;
+  --khula-muted: #656b61;
+  --khula-yellow: #e8c13e;
+  --khula-green: #4f8137;
+  --khula-green-soft: #e8f0e2;
+  --khula-error: #a33b2f;
 }
 
 html,
@@ -1758,7 +1758,7 @@ body .auth-panel {
   color: var(--khula-text);
   border-color: var(--khula-border);
   background-color: var(--khula-surface);
-  box-shadow: 0 8px 26px rgb(0 0 0 / 24%);
+  box-shadow: 0 8px 26px rgb(20 24 17 / 6%);
 }
 
 body .app-shell :is(h1, h2, h3, p, span, strong, small, label, li, time, button, a, code),
@@ -1767,18 +1767,18 @@ body .auth-page :is(h1, h2, h3, p, span, strong, small, label, li, time, button,
 }
 
 body .app-shell .sidebar {
-  border-right-color: var(--khula-border);
+  border-right-color: #292b25;
   background: var(--khula-sidebar);
 }
 
 body .app-shell .topbar {
   border-bottom-color: var(--khula-border);
-  background: rgb(17 19 15 / 94%);
+  background: rgb(255 255 255 / 96%);
 }
 
 body .app-shell .welcome-panel {
-  border-color: #39432c;
-  background: linear-gradient(120deg, #1d2719, #151711 76%);
+  border-color: #272a22;
+  background: linear-gradient(120deg, #151713, #22251d 76%);
 }
 
 body .app-shell :is(.weather-current, .weather-day, .assistant-messages, .assistant-privacy-note, .farm-summary, .nav-symbol, .auth-tabs) {
@@ -1792,7 +1792,7 @@ body .app-shell .activity-row {
 
 body .app-shell .eyebrow,
 body .auth-page .eyebrow {
-  color: var(--khula-yellow);
+  color: #947200;
 }
 
 body .app-shell :is(
@@ -1827,12 +1827,12 @@ body .auth-page .brand-mark {
 }
 
 body .app-shell .nav-link {
-  color: var(--khula-muted);
+  color: #d5d8ce;
 }
 
 body .app-shell .nav-link:hover {
-  color: var(--khula-green);
-  background: var(--khula-raised);
+  color: #fff;
+  background: #252820;
 }
 
 body .app-shell .quick-link-card:hover {
@@ -1842,12 +1842,12 @@ body .app-shell .quick-link-card:hover {
 
 body .app-shell .logout-button:hover {
   color: var(--khula-error);
-  background: #2b1916;
+  background: #32201d;
 }
 
 body .app-shell .nav-link.active {
   color: var(--khula-yellow);
-  background: var(--khula-green-soft);
+  background: #292d24;
 }
 
 body .app-shell .nav-link.active .nav-symbol {
@@ -1862,12 +1862,16 @@ body .app-shell :is(.quick-link-icon, .feature-mark, .farm-avatar, .account-avat
 }
 
 body .app-shell .assistant-avatar {
-  color: #14150f;
+  color: #fff;
   background: var(--khula-green);
 }
 
-body .app-shell :is(.topbar h1, .page-heading h2, .panel h2, .welcome-panel h2, .stat-card strong, .farm-size strong, .weather-temperature, .bundle-price) {
-  color: var(--khula-yellow);
+body .app-shell :is(.topbar h1, .page-heading h2, .panel h2, .panel h3, .welcome-panel h2) {
+  color: var(--khula-text);
+}
+
+body .app-shell :is(.stat-card strong, .farm-size strong, .weather-temperature, .bundle-price) {
+  color: var(--khula-green);
 }
 
 body .app-shell .plan-badge {
@@ -1921,15 +1925,15 @@ body .app-shell .assistant-ready {
 
 body .app-shell .assistant-needs-key,
 body .app-shell .assistant-key-notice {
-  border-color: #6a5a2c;
-  color: var(--khula-yellow);
-  background: #2a2516;
+  border-color: #e3d39c;
+  color: #6c5710;
+  background: #fff8df;
 }
 
 body .app-shell .assistant-message.user {
-  border-color: #46613a;
+  border-color: #c7d9bb;
   color: var(--khula-text);
-  background: #202b1b;
+  background: #edf5e9;
 }
 
 body .app-shell .assistant-message p,
@@ -1942,7 +1946,7 @@ body .app-shell :is(input, select, textarea),
 body .auth-page :is(input, select, textarea) {
   border-color: var(--khula-border);
   color: var(--khula-text);
-  background: #10120e;
+  background: #fff;
 }
 
 body :is(input, select, textarea)::placeholder {
@@ -1951,7 +1955,7 @@ body :is(input, select, textarea)::placeholder {
 
 body :is(input, select, textarea):focus {
   border-color: var(--khula-yellow);
-  box-shadow: 0 0 0 2px rgb(242 207 88 / 17%);
+  box-shadow: 0 0 0 2px rgb(232 193 62 / 22%);
 }
 
 body .app-shell .farm-picker select,
@@ -1969,22 +1973,22 @@ body .auth-tab {
 }
 
 body .auth-tab.active {
-  color: var(--khula-yellow);
+  color: #365f29;
   background: var(--khula-green-soft);
 }
 
 body .app-shell .feedback-error,
 body .auth-page .feedback-error {
-  border-color: #704138;
+  border-color: #e6c0b9;
   color: var(--khula-error);
-  background: #2b1916;
+  background: #fff1ed;
 }
 
 body .app-shell .feedback-success,
 body .auth-page .feedback-success {
-  border-color: #405d34;
+  border-color: #c9dbc0;
   color: var(--khula-green);
-  background: #1b2919;
+  background: #eff7eb;
 }
 
 body .app-shell :is(.assistant-error, .weather-error) {
@@ -2010,8 +2014,38 @@ body .app-shell .account-card {
 }
 
 body .app-shell .selected-plan {
-  border-color: var(--khula-yellow);
-  box-shadow: 0 0 0 1px rgb(242 207 88 / 22%);
+  border-color: var(--khula-green);
+  box-shadow: 0 0 0 1px rgb(79 129 55 / 14%);
+}
+
+body .app-shell .sidebar :is(.nav-link, .sidebar-caption, .nav-lock, .account-details strong, .account-details span, .logout-button) {
+  color: #c7cbc0;
+}
+
+body .app-shell .sidebar .nav-link.active {
+  color: var(--khula-yellow);
+}
+
+body .app-shell .welcome-panel :is(h2, p:not(.eyebrow)) {
+  color: #f4f4ed;
+}
+
+body .app-shell .welcome-panel .eyebrow {
+  color: var(--khula-yellow);
+}
+
+body .app-shell .assistant-key-notice code {
+  color: #4c3e12;
+}
+
+body .app-shell .assistant-messages {
+  border-color: var(--khula-border);
+}
+
+body .app-shell .button-disabled {
+  border-color: var(--khula-border);
+  color: #777d73;
+  background: #eceee9;
 }
 
 @media (max-width: 900px) {
