@@ -177,7 +177,8 @@ async function sendVerificationEmail(email, token) {
       }),
       signal: AbortSignal.timeout(10000)
     });
-  } catch {
+  } catch (error) {
+    console.error('Resend HTTPS request failed:', error.cause?.code || error.name);
     throw Object.assign(
       new Error('Could not reach Resend to send the verification email. Check your connection and try resending.'),
       { status: 502 }
