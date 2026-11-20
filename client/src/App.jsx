@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AuthPage from './AuthPage.jsx';
 import { apiRequest } from './api.js';
 
@@ -42,6 +42,7 @@ const initialFarmForm = {
   ownerName: '',
   province: '',
   district: '',
+  nearestTown: '',
   areaHectares: '',
   farmType: 'crop',
   soilType: '',
@@ -70,11 +71,43 @@ const formatDate = (value) => {
   return new Date(`${value.slice(0, 10)}T00:00:00`).toLocaleDateString();
 };
 
+const weatherDescription = (code) => ({
+  0: 'Clear sky',
+  1: 'Mainly clear',
+  2: 'Partly cloudy',
+  3: 'Overcast',
+  45: 'Fog',
+  48: 'Depositing rime fog',
+  51: 'Light drizzle',
+  53: 'Moderate drizzle',
+  55: 'Dense drizzle',
+  56: 'Light freezing drizzle',
+  57: 'Dense freezing drizzle',
+  61: 'Slight rain',
+  63: 'Moderate rain',
+  65: 'Heavy rain',
+  66: 'Light freezing rain',
+  67: 'Heavy freezing rain',
+  71: 'Slight snow',
+  73: 'Moderate snow',
+  75: 'Heavy snow',
+  77: 'Snow grains',
+  80: 'Slight rain showers',
+  81: 'Moderate rain showers',
+  82: 'Violent rain showers',
+  85: 'Slight snow showers',
+  86: 'Heavy snow showers',
+  95: 'Thunderstorm',
+  96: 'Thunderstorm with slight hail',
+  99: 'Thunderstorm with heavy hail'
+}[code] || 'Conditions unavailable');
+
 function App() {
   const [user, setUser] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [initialAuthError, setInitialAuthError] = useState('');
   const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
+  const [assistantAvailable, setAssistantAvailable] = useState(false);
   const [activePage, setActivePage] = useState('overview');
   const [farms, setFarms] = useState([]);
   const [selectedFarmId, setSelectedFarmId] = useState('');
@@ -95,7 +128,10 @@ function App() {
       const verificationToken = new URLSearchParams(window.location.hash.slice(1)).get('verify');
       try {
         const serverStatus = await apiRequest('/api/health');
-        if (active) setEmailVerificationRequired(serverStatus.emailVerificationRequired);
+        if (active) {
+          setEmailVerificationRequired(serverStatus.emailVerificationRequired);
+          setAssistantAvailable(serverStatus.assistantConfigured);
+        }
         if (verificationToken) {
           window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
           const verifiedUser = await apiRequest('/api/auth/verify-email', {
@@ -195,6 +231,19 @@ function App() {
     } finally {
       setSavingFarm(false);
     }
+  }
+
+  async function handleWeatherLocationSave(nearestTown) {
+    const updated = await apiRequest(`/api/farms/${selectedFarmId}/weather-location`, {
+      method: 'PATCH',
+      body: JSON.stringify({ nearestTown })
+    });
+    setFarms((existing) =>
+      existing.map((farm) =>
+        farm.id === selectedFarmId ? { ...farm, ...updated } : farm
+      )
+    );
+    return updated;
   }
 
   async function handleCropSubmit(event) {
@@ -401,11 +450,11 @@ function App() {
           ) : activePage === 'learning' ? (
             <LearningPage />
           ) : activePage === 'weather' ? (
-            <WeatherPage farm={selectedFarm} />
+            <WeatherPage farm={selectedFarm} onSaveNearestTown={handleWeatherLocationSave} />
           ) : activePage === 'marketplace' ? (
             <MarketplacePage />
           ) : activePage === 'assistant' ? (
-            <AssistantPage farm={selectedFarm} cycles={cropCycles} />
+            <AssistantPage farm={selectedFarm} cycles={cropCycles} assistantAvailable={assistantAvailable} />
           ) : activePage === 'profile' ? (
             <ProfilePage user={user} emailVerificationRequired={emailVerificationRequired} />
           ) : (
@@ -495,7 +544,7 @@ function OverviewPage({ user, farms, selectedFarm, cropCycles, activeCrops, data
         </button>
         <button className="quick-link-card" onClick={() => onGoTo('weather')}>
           <span className="quick-link-icon">W</span>
-          <span><strong>Weather intelligence</strong><small>Forecast connection is pending</small></span>
+          <span><strong>Weather intelligence</strong><small>Seven-day forecast for your nearest town</small></span>
           <span aria-hidden="true">→</span>
         </button>
       </section>
@@ -545,6 +594,7 @@ function FarmProfilePage({ farms, selectedFarmId, onSelectFarm, form, onChange, 
                 {farms.find((farm) => farm.id === selectedFarmId)?.district},
                 {' '}{farms.find((farm) => farm.id === selectedFarmId)?.province}
               </p>
+              <p>Forecast location: {farms.find((farm) => farm.id === selectedFarmId)?.nearest_town || 'Not set'}</p>
             </div>
             <div className="farm-size">
               <strong>{Number(farms.find((farm) => farm.id === selectedFarmId)?.area_hectares).toLocaleString()}</strong>
@@ -572,6 +622,10 @@ function FarmProfilePage({ farms, selectedFarmId, onSelectFarm, form, onChange, 
           <label>
             District
             <input name="district" value={form.district} onChange={onChange} required />
+          </label>
+          <label>
+            Nearest town for weather
+            <input name="nearestTown" value={form.nearestTown} onChange={onChange} required maxLength="100" />
           </label>
           <label>
             Farm size (hectares)
@@ -825,25 +879,161 @@ function LearningPage() {
   );
 }
 
-function WeatherPage({ farm }) {
+function WeatherPage({ farm, onSaveNearestTown }) {
+  const [weather, setWeather] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [savingTown, setSavingTown] = useState(false);
+  const [nearestTown, setNearestTown] = useState(farm?.nearest_town || '');
+  const [weatherError, setWeatherError] = useState('');
+  const [locationError, setLocationError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setWeather(null);
+    setWeatherError('');
+    setNearestTown(farm?.nearest_town || '');
+
+    if (!farm?.id || !farm.nearest_town) {
+      setLoading(false);
+      return () => controller.abort();
+    }
+
+    setLoading(true);
+    apiRequest(`/api/farms/${farm.id}/weather`, { signal: controller.signal })
+      .then((forecast) => {
+        if (active) setWeather(forecast);
+      })
+      .catch((requestError) => {
+        if (active && requestError.name !== 'AbortError') {
+          setWeatherError(requestError.message);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [farm?.id, farm?.nearest_town, refreshKey]);
+
+  async function handleLocationSubmit(event) {
+    event.preventDefault();
+    setLocationError('');
+    setSavingTown(true);
+    try {
+      await onSaveNearestTown(nearestTown.trim());
+      setRefreshKey((current) => current + 1);
+    } catch (requestError) {
+      setLocationError(requestError.message);
+    } finally {
+      setSavingTown(false);
+    }
+  }
+
   return (
     <div className="content-stack">
       <section className="page-heading">
         <p className="eyebrow">BASIC AND PREMIUM</p>
         <h2>Weather intelligence</h2>
-        <p>Farm-specific forecasts and crop-aware alerts belong here.</p>
+        <p>Check current conditions and the seven-day outlook for your farm's nearest town.</p>
       </section>
-      <section className="panel feature-notice">
-        <span className="feature-mark">W</span>
-        <div>
-          <p className="eyebrow">{farm ? `FARM LOCATION · ${farm.district}, ${farm.province}` : 'FARM LOCATION'}</p>
-          <h3>Live forecast is not connected</h3>
-          <p>
-            No forecast or weather-based recommendations are generated yet. A weather
-            provider must be connected before Khula AI can make timely suggestions.
-          </p>
-        </div>
-      </section>
+      {!farm ? (
+        <section className="panel empty-state">
+          <h3>Add a farm to view its forecast</h3>
+          <p>Farm weather is linked to the farm selected in your profile.</p>
+        </section>
+      ) : (
+        <>
+          <section className="panel form-panel">
+            <p className="eyebrow">FORECAST LOCATION</p>
+            <h2>{farm.name} · {farm.district}, {farm.province}</h2>
+            <p className="small-note">Use a South African nearest town, not your exact farm address. This approximate location is used to retrieve the forecast.</p>
+            <form className="weather-location-form" onSubmit={handleLocationSubmit}>
+              <label>
+                Nearest town
+                <input
+                  value={nearestTown}
+                  onChange={(event) => setNearestTown(event.target.value)}
+                  maxLength="100"
+                  required
+                />
+              </label>
+              <button className="button-primary compact-button" disabled={savingTown}>
+                {savingTown ? 'Saving location...' : 'Save forecast location'}
+              </button>
+            </form>
+            {locationError && <p className="weather-error" role="alert">{locationError}</p>}
+          </section>
+
+          {loading ? (
+            <section className="panel empty-state"><p>Loading the latest forecast...</p></section>
+          ) : weatherError ? (
+            <section className="panel empty-state">
+              <h3>Forecast unavailable</h3>
+              <p className="weather-error" role="alert">{weatherError}</p>
+              <button className="button-secondary compact-button" onClick={() => setRefreshKey((current) => current + 1)}>
+                Try again
+              </button>
+            </section>
+          ) : weather ? (
+            <>
+              <section className="panel">
+                <div className="section-heading weather-section-heading">
+                  <div>
+                    <p className="eyebrow">CURRENT CONDITIONS · {weather.location.name}</p>
+                    <h2>{weatherDescription(weather.current.weather_code)}</h2>
+                  </div>
+                  <span className="small-note">Updated {new Date(weather.fetchedAt).toLocaleString()}</span>
+                </div>
+                <div className="weather-current">
+                  <strong className="weather-temperature">
+                    {weather.current.temperature_2m}{weather.currentUnits?.temperature_2m}
+                  </strong>
+                  <div className="weather-metrics">
+                    <div><span>Humidity</span><strong>{weather.current.relative_humidity_2m}{weather.currentUnits?.relative_humidity_2m}</strong></div>
+                    <div><span>Precipitation</span><strong>{weather.current.precipitation} {weather.currentUnits?.precipitation}</strong></div>
+                    <div><span>Wind</span><strong>{weather.current.wind_speed_10m} {weather.currentUnits?.wind_speed_10m}</strong></div>
+                  </div>
+                </div>
+              </section>
+              <section className="panel">
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">NEXT SEVEN DAYS</p>
+                    <h2>Forecast</h2>
+                  </div>
+                  <span className="small-note">{weather.timezone}</span>
+                </div>
+                <div className="weather-forecast-grid">
+                  {weather.daily.time.map((date, index) => (
+                    <article className="weather-day" key={date}>
+                      <strong>{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</strong>
+                      <span>{weatherDescription(weather.daily.weather_code[index])}</span>
+                      <span>High {weather.daily.temperature_2m_max[index]}{weather.dailyUnits?.temperature_2m_max}</span>
+                      <span>Low {weather.daily.temperature_2m_min[index]}{weather.dailyUnits?.temperature_2m_min}</span>
+                      <span>Rain chance {weather.daily.precipitation_probability_max[index]}{weather.dailyUnits?.precipitation_probability_max}</span>
+                      <span>Rain {weather.daily.precipitation_sum[index]} {weather.dailyUnits?.precipitation_sum}</span>
+                    </article>
+                  ))}
+                </div>
+                <p className="small-note weather-attribution">
+                  Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo.com</a> (CC BY 4.0).
+                  Prototype use only; a commercial plan is required before commercial launch.
+                </p>
+              </section>
+            </>
+          ) : (
+            <section className="panel empty-state">
+              <h3>Save a nearest town to load the forecast</h3>
+              <p>We will use the town and province to find approximate coordinates, then request the weather forecast.</p>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -864,48 +1054,184 @@ function MarketplacePage() {
   );
 }
 
-function AssistantPage({ farm, cycles }) {
+function AssistantPage({ farm, cycles, assistantAvailable }) {
+  const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState('');
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState('');
+  const [error, setError] = useState('');
+  const bottomOfConversation = useRef(null);
+  const suggestions = [
+    'Summarize my active crops and their growth stages.',
+    'What should I watch for in the next seven days?',
+    'Which records would help you give better crop advice?'
+  ];
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setMessages([]);
+    setError('');
+    if (!farm?.id) {
+      setLoadingHistory(false);
+      return () => controller.abort();
+    }
+
+    setLoadingHistory(true);
+    apiRequest(`/api/farms/${farm.id}/assistant/messages`, { signal: controller.signal })
+      .then((rows) => {
+        if (active) setMessages(rows);
+      })
+      .catch((requestError) => {
+        if (active && requestError.name !== 'AbortError') setError(requestError.message);
+      })
+      .finally(() => {
+        if (active) setLoadingHistory(false);
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [farm?.id]);
+
+  useEffect(() => {
+    bottomOfConversation.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, pendingMessage, sending]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    const content = draft.trim();
+    if (!farm || !assistantAvailable || !content || sending) return;
+
+    setError('');
+    setPendingMessage(content);
+    setSending(true);
+    try {
+      const result = await apiRequest(`/api/farms/${farm.id}/assistant/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      });
+      setMessages((existing) => [...existing, ...result.messages]);
+      setDraft('');
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPendingMessage('');
+      setSending(false);
+    }
+  }
+
   return (
     <div className="content-stack">
       <section className="page-heading">
         <p className="eyebrow">BASIC AND PREMIUM</p>
         <h2>AI assistant</h2>
-        <p>Designed to use your crop records as context, not guess from generic advice.</p>
+        <p>Ask Khula AI about your crop records and available farm forecast.</p>
       </section>
-      <section className="panel assistant-preview">
-        <div className="assistant-heading">
-          <span className="assistant-avatar">AI</span>
-          <div>
-            <h3>Khula AI Copilot</h3>
-            <p>Crop lifecycle support · Preview</p>
+      {!farm ? (
+        <section className="panel empty-state">
+          <h3>Add a farm to start a conversation</h3>
+          <p>Khula AI uses the selected farm’s crop records and forecast to keep its answers relevant.</p>
+        </section>
+      ) : (
+        <section className="panel copilot-panel">
+          <div className="assistant-heading">
+            <span className="assistant-avatar" aria-hidden="true">AI</span>
+            <div>
+              <h3>Khula AI Copilot</h3>
+              <p>{farm.name} · {cycles.length} crop records</p>
+            </div>
+            <span className={`status-chip ${assistantAvailable ? 'assistant-ready' : 'assistant-needs-key'}`}>
+              {assistantAvailable ? 'OpenAI connected' : 'API key needed'}
+            </span>
           </div>
-          <span className="status-chip">Not connected</span>
-        </div>
-        <div className="assistant-context">
-          <strong>Available account context</strong>
-          <span>{farm ? `${farm.name} · ${cycles.length} crop records` : 'Add a farm and crop records to build your farm history'}</span>
-        </div>
-        <div className="assistant-capabilities">
-          <article>
-            <span>01</span>
-            <strong>Record-based answers</strong>
-            <p>Planned to reference your farm and crop lifecycle history.</p>
-          </article>
-          <article>
-            <span>02</span>
-            <strong>Image disease support</strong>
-            <p>Not active. Any future image assessment must state uncertainty and recommend expert review.</p>
-          </article>
-          <article>
-            <span>03</span>
-            <strong>Weather-aware suggestions</strong>
-            <p>Requires a live forecast source before timely advice can be generated.</p>
-          </article>
-        </div>
-        <p className="small-note">
-          This preview does not diagnose crop disease or generate AI recommendations.
-        </p>
-      </section>
+
+          <div className="assistant-privacy-note">
+            Replies use this farm’s records, recent chat, and available forecast. Your question and that context are sent to OpenAI to generate a reply. This assistant does not diagnose crop disease.
+          </div>
+
+          {!assistantAvailable && (
+            <div className="assistant-key-notice" role="status">
+              Add <code>OPENAI_API_KEY</code> to the project’s local <code>.env</code> file, then restart <code>npm run dev</code> to enable replies. Never put the key in frontend code or share it in chat.
+            </div>
+          )}
+
+          <div className="assistant-messages" aria-live="polite">
+            {loadingHistory ? (
+              <p className="empty-note">Loading this farm’s conversation...</p>
+            ) : messages.length === 0 && !pendingMessage ? (
+              <div className="assistant-welcome">
+                <strong>Let’s look at your farm together.</strong>
+                <span>Try one of these questions:</span>
+                <div className="assistant-suggestions">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      className="button-secondary"
+                      key={suggestion}
+                      disabled={!assistantAvailable || sending}
+                      onClick={() => setDraft(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <article className={`assistant-message ${message.role}`} key={message.id}>
+                  <div className="assistant-message-meta">
+                    <strong>{message.role === 'assistant' ? 'Khula AI' : 'You'}</strong>
+                    <time dateTime={message.created_at}>
+                      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </time>
+                  </div>
+                  <p>{message.content}</p>
+                </article>
+              ))
+            )}
+            {pendingMessage && (
+              <article className="assistant-message user">
+                <div className="assistant-message-meta"><strong>You</strong><span>Sending</span></div>
+                <p>{pendingMessage}</p>
+              </article>
+            )}
+            {sending && <p className="assistant-thinking">Khula AI is checking your farm context...</p>}
+            <div ref={bottomOfConversation} />
+          </div>
+
+          {error && <p className="assistant-error" role="alert">{error}</p>}
+
+          <form className="assistant-composer" onSubmit={handleSubmit}>
+            <label htmlFor="assistant-message">Your question</label>
+            <textarea
+              id="assistant-message"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Ask about your crops, records, or the upcoming forecast..."
+              maxLength={1600}
+              rows={3}
+              disabled={!assistantAvailable || sending}
+              required
+            />
+            <div className="assistant-composer-footer">
+              <span>{draft.length}/1600 · Chat is saved for this farm</span>
+              <button
+                className="button-primary compact-button"
+                type="submit"
+                disabled={!assistantAvailable || sending || !draft.trim()}
+              >
+                {sending ? 'Thinking...' : 'Send message'}
+              </button>
+            </div>
+          </form>
+
+          <p className="small-note assistant-disclaimer">
+            Crop guidance is informational, not a diagnosis or substitute for a local agricultural extension officer. Image analysis is not enabled.
+          </p>
+        </section>
+      )}
     </div>
   );
 }
@@ -937,7 +1263,7 @@ function SubscriptionPage({ subscription }) {
           <p>Core crop tracking plus the features selected for Basic.</p>
           <ul>
             <li>Overview, farm profiles, and crop records</li>
-            <li>AI assistant preview</li>
+            <li>OpenAI crop copilot (requires API key setup)</li>
             <li>MTN Data Bundles catalogue</li>
             <li>Weather intelligence</li>
           </ul>

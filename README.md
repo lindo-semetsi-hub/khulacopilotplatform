@@ -47,10 +47,24 @@ TLS verification.
 - Crop cycles can be advanced through growth stages, with changes recorded as
   crop events.
 - Basic includes the overview, farm/crop records, bundle catalogue preview,
-  weather preview, and AI assistant preview. Learning Hub and Marketplace are
-  Premium-only.
-- Learning, Marketplace, MTN bundle pricing/availability, live weather, and AI
-  responses are clearly marked previews; no external provider is connected.
+  live weather forecast prototype, and AI assistant. Learning Hub and Marketplace
+  are Premium-only.
+- Weather Intelligence uses Open-Meteo for current conditions and a seven-day
+  forecast. Farm profiles use a South African nearest town and province to look up
+  approximate coordinates; exact farm coordinates are not shown in the UI.
+  Forecast responses are cached for 15 minutes. Open-Meteo's free service is
+  for non-commercial use; a commercial plan and attribution are required before
+  commercial launch. The forecast does not currently generate crop advice.
+- The AI assistant uses OpenAI when `OPENAI_API_KEY` is configured. It grounds
+  replies in the selected farm's crop records, recent events, available forecast,
+  and saved conversation. Messages are private to the signed-in user and farm.
+  Questions and that context are sent to OpenAI; image analysis is not enabled.
+- To enable the assistant, add `OPENAI_API_KEY` to `.env` and restart the API.
+  `OPENAI_MODEL` defaults to `gpt-6-luna` and can be changed there. Keep the key
+  on the server and never commit or paste it into chat. OpenAI API usage may
+  incur charges.
+- Learning, Marketplace, MTN bundle pricing/availability, and image-based
+  disease detection remain previews; no provider is connected for those features.
 - No sample data is inserted.
 
 There is no phone verification, payment gateway, or Premium checkout. New users
