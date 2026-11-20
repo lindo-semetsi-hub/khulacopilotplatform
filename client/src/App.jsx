@@ -133,7 +133,6 @@ function App() {
   const [initialAuthError, setInitialAuthError] = useState('');
   const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
   const [assistantAvailable, setAssistantAvailable] = useState(false);
-  const [payfastConfigured, setPayfastConfigured] = useState(false);
   const [payfastCheckoutAvailable, setPayfastCheckoutAvailable] = useState(false);
   const [activePage, setActivePage] = useState('overview');
   const [farms, setFarms] = useState([]);
@@ -158,7 +157,6 @@ function App() {
         if (active) {
           setEmailVerificationRequired(serverStatus.emailVerificationRequired);
           setAssistantAvailable(serverStatus.assistantConfigured);
-          setPayfastConfigured(serverStatus.payfastConfigured);
           setPayfastCheckoutAvailable(serverStatus.payfastCheckoutAvailable);
         }
         if (verificationToken) {
@@ -495,7 +493,6 @@ function App() {
               subscription={user.subscription}
               userMobile={user.mobileNumber}
               isBundleAdmin={user.isBundleAdmin}
-              payfastConfigured={payfastConfigured}
               payfastCheckoutAvailable={payfastCheckoutAvailable}
               onViewPlans={() => setActivePage('subscription')}
             />
@@ -864,7 +861,6 @@ function BundlesPage({
   subscription,
   userMobile,
   isBundleAdmin,
-  payfastConfigured,
   payfastCheckoutAvailable,
   onViewPlans
 }) {
@@ -1050,22 +1046,10 @@ function BundlesPage({
           <button className="button-secondary" onClick={onViewPlans}>View plan access</button>
         </section>
         <section className="panel mini-feature">
-          <p className="eyebrow">PAYMENT INFORMATION</p>
-          <h3>
-            {!payfastConfigured
-              ? 'Checkout temporarily unavailable'
-              : payfastCheckoutAvailable
-                ? 'Test-mode checkout'
-                : 'Live payments are paused'}
-          </h3>
-          <p>
-            {!payfastConfigured
-              ? 'Online checkout is temporarily unavailable while secure payment processing is prepared. No payment will be taken.'
-              : payfastCheckoutAvailable
-                ? 'This checkout uses test payments. Live payments are paused while we prepare reliable order handling and monthly subscription cancellation.'
-                : 'Live payments are paused while we prepare reliable order handling and monthly subscription cancellation. No live payment will be taken.'}
-          </p>
-          <p>Bundle delivery is arranged after payment is confirmed.</p>
+          <p className="eyebrow">MTN DATA BUNDLES</p>
+          <span className="bundle-brand-name">MTN</span>
+          <h3>Keep your farm connected.</h3>
+          <p>Choose an MTN once-off or monthly bundle to stay connected to weather, crop records, and farm planning.</p>
         </section>
       </div>
       {isBundleAdmin && (

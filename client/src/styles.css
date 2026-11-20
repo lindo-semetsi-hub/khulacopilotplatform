@@ -1045,6 +1045,13 @@ button {
   gap: 10px;
 }
 
+.bundle-brand-name {
+  color: #171717;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 .lesson-card {
   position: relative;
   display: grid;
