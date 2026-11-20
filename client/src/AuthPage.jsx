@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { apiRequest } from './api.js';
 
-function AuthPage({ onAuthenticated, initialError }) {
+function AuthPage({ onAuthenticated, initialError, emailVerificationRequired }) {
   const [mode, setMode] = useState('register');
   const [email, setEmail] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -17,21 +17,24 @@ function AuthPage({ onAuthenticated, initialError }) {
     setError('');
     setSubmitting(true);
     try {
-      const user = await apiRequest(`/api/auth/${mode}`, {
+      const result = await apiRequest(`/api/auth/${mode}`, {
         method: 'POST',
         body: JSON.stringify({ email, mobileNumber, password })
       });
-      if (mode === 'register') {
-        setResendEmail(user.email);
-        setNotice(user.message);
+      if (mode === 'register' && result.verificationRequired) {
+        setResendEmail(result.email);
+        setNotice(result.message);
         setMode('login');
         setPassword('');
       } else {
-        onAuthenticated(user);
+        onAuthenticated(result.user || result);
       }
     } catch (requestError) {
       setError(requestError.message);
-      if (requestError.code === 'EMAIL_NOT_VERIFIED' || (mode === 'register' && requestError.status === 502)) {
+      if (emailVerificationRequired && (
+        requestError.code === 'EMAIL_NOT_VERIFIED' ||
+        (mode === 'register' && requestError.status === 502)
+      )) {
         setResendEmail(email);
       }
     } finally {
@@ -162,7 +165,7 @@ function AuthPage({ onAuthenticated, initialError }) {
           </button>
         </form>
 
-        {resendEmail && mode === 'login' && (
+        {emailVerificationRequired && resendEmail && mode === 'login' && (
           <button
             type="button"
             className="resend-link"
@@ -174,8 +177,9 @@ function AuthPage({ onAuthenticated, initialError }) {
         )}
 
         <p className="auth-footnote">
-          Email verification is required before sign-in. Check your inbox for the
-          one-time link; it expires after 24 hours.
+          {emailVerificationRequired
+            ? 'Email verification is required before sign-in. Check your inbox for the one-time link; it expires after 24 hours.'
+            : 'Local development signs you in immediately. Email ownership is not verified until email delivery is configured for production.'}
         </p>
       </section>
     </main>

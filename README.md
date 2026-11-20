@@ -8,7 +8,7 @@ email/mobile registration with sign-in.
 
 You need Node.js and npm. Local development uses PGlite, an embedded PostgreSQL
 database, so a separate PostgreSQL server, pgAdmin, and database password are
-not required. Email verification uses the Resend API.
+not required.
 
 1. Install dependencies:
 
@@ -16,17 +16,13 @@ not required. Email verification uses the Resend API.
    npm install
    ```
 
-2. Create a Resend account, verify a sender domain, and create an API key. Add
-   `RESEND_API_KEY`, `EMAIL_FROM`, and `APP_BASE_URL` from `.env.example` to your
-   existing `.env`; keep your other local settings and keep `.env` private.
-
-3. Start the API and React development server:
+2. Start the API and React development server:
 
    ```sh
    npm run dev
    ```
 
-4. Open `http://127.0.0.1:5173`.
+3. Open `http://127.0.0.1:5173`.
 
 The API is available at `http://127.0.0.1:3001`. It creates or updates the
 schema on startup. PostgreSQL data is stored in `.localdb/` and is ignored by
@@ -40,10 +36,13 @@ TLS verification.
 
 - Accounts register with an email address, mobile number, and password. New
   accounts start on Basic; passwords are stored as scrypt hashes.
-- Registration sends a one-time email verification link through Resend. Users
-  cannot sign in until they verify. Links expire after 24 hours.
-- The verification link returns to `APP_BASE_URL`; use the local app URL for
-  development and your deployed HTTPS URL for a real deployment.
+- In local development, registration signs the user in immediately so work can
+  continue without an email provider. The profile clearly marks the email as
+  unverified; accounts and farm data remain separated by user.
+- When `NODE_ENV=production`, registration requires a one-time Resend email
+  verification link before sign-in. Links expire after 24 hours.
+- Before deploying, verify a sender domain in Resend and set `RESEND_API_KEY`,
+  `EMAIL_FROM`, and `APP_BASE_URL` in the deployment environment.
 - Farm profiles and crop cycles are private to the signed-in account.
 - Crop cycles can be advanced through growth stages, with changes recorded as
   crop events.
@@ -56,6 +55,6 @@ TLS verification.
 
 There is no phone verification, payment gateway, or Premium checkout. New users
 receive Basic, and Premium-only pages remain locked until billing is designed
-and implemented. This authentication setup is for local development and is not
-ready to expose publicly. A future switch to a shared PostgreSQL server will
-require migrating the local data to that server.
+and implemented. The local development email-verification bypass is not an
+identity check and must not be used as a production policy. A future switch to
+a shared PostgreSQL server will require migrating the local data to that server.

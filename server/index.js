@@ -7,6 +7,7 @@ import { db, initializeDatabase } from './db/index.js';
 const app = express();
 const port = Number(process.env.PORT) || 3001;
 const scrypt = promisify(scryptCallback);
+const emailVerificationRequired = process.env.NODE_ENV === 'production';
 const stages = [
   'seeded',
   'germination',
@@ -216,12 +217,17 @@ async function requireAuth(request, response, next) {
               u.email_verified, u.created_at
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = $1 AND s.expires_at > now() AND u.email_verified = TRUE`,
+       WHERE s.token_hash = $1 AND s.expires_at > now()`,
       [hashSessionToken(token)]
     );
     if (!result.rows.length) {
       clearSessionCookie(response);
       response.status(401).json({ error: 'Your session has expired. Please sign in again.' });
+      return;
+    }
+    if (emailVerificationRequired && !result.rows[0].email_verified) {
+      clearSessionCookie(response);
+      response.status(401).json({ error: 'Verify your email address before signing in.' });
       return;
     }
 
@@ -234,7 +240,7 @@ async function requireAuth(request, response, next) {
 
 app.post('/api/auth/register', limitAuthAttempts, async (request, response, next) => {
   try {
-    ensureEmailConfiguration();
+    if (emailVerificationRequired) ensureEmailConfiguration();
     const body = request.body || {};
     const email = requiredText(body.email, 'Email').toLowerCase();
     const mobileNumber = requiredText(body.mobileNumber, 'Mobile number').replace(/[\s().-]/g, '');
@@ -253,7 +259,12 @@ app.post('/api/auth/register', limitAuthAttempts, async (request, response, next
     }
 
     const passwordHash = await hashPassword(password);
-    const verificationToken = randomBytes(32).toString('base64url');
+    const verificationToken = emailVerificationRequired
+      ? randomBytes(32).toString('base64url')
+      : null;
+    const sessionToken = emailVerificationRequired
+      ? null
+      : randomBytes(32).toString('base64url');
     const user = await db.transaction(async (tx) => {
       const inserted = await tx.query(
         `INSERT INTO users
@@ -262,24 +273,44 @@ app.post('/api/auth/register', limitAuthAttempts, async (request, response, next
          RETURNING id, email, mobile_number, subscription, email_verified, created_at`,
         [email, mobileNumber, passwordHash]
       );
-      await tx.query(
-        `INSERT INTO email_verifications (user_id, token_hash, expires_at)
-         VALUES ($1, $2, $3)`,
-        [
-          inserted.rows[0].id,
-          hashSessionToken(verificationToken),
-          new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        ]
-      );
+      if (emailVerificationRequired) {
+        await tx.query(
+          `INSERT INTO email_verifications (user_id, token_hash, expires_at)
+           VALUES ($1, $2, $3)`,
+          [
+            inserted.rows[0].id,
+            hashSessionToken(verificationToken),
+            new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          ]
+        );
+      } else {
+        await tx.query(
+          'INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)',
+          [
+            hashSessionToken(sessionToken),
+            inserted.rows[0].id,
+            new Date(Date.now() + sessionDurationMs).toISOString()
+          ]
+        );
+      }
       return safeUser(inserted.rows[0]);
     });
 
-    await sendVerificationEmail(email, verificationToken);
-    response.status(202).json({
-      verificationRequired: true,
-      email: user.email,
-      message: 'We sent a verification link to your email address.'
-    });
+    if (emailVerificationRequired) {
+      await sendVerificationEmail(email, verificationToken);
+      response.status(202).json({
+        verificationRequired: true,
+        email: user.email,
+        message: 'We sent a verification link to your email address.'
+      });
+    } else {
+      setSessionCookie(response, sessionToken);
+      response.status(201).json({
+        verificationRequired: false,
+        user,
+        message: 'Account created. Email ownership is not verified in local development.'
+      });
+    }
   } catch (error) {
     if (error.code === '23505') {
       response.status(409).json({ error: 'An account already uses that email or mobile number.' });
@@ -305,7 +336,7 @@ app.post('/api/auth/login', limitAuthAttempts, async (request, response, next) =
       response.status(401).json({ error: 'Email or password is incorrect.' });
       return;
     }
-    if (!account.email_verified) {
+    if (emailVerificationRequired && !account.email_verified) {
       response.status(403).json({
         error: 'Verify your email address before signing in.',
         code: 'EMAIL_NOT_VERIFIED'
@@ -323,6 +354,10 @@ app.post('/api/auth/login', limitAuthAttempts, async (request, response, next) =
 
 app.post('/api/auth/resend-verification', limitAuthAttempts, async (request, response, next) => {
   try {
+    if (!emailVerificationRequired) {
+      response.json({ message: 'Email verification is skipped in local development.' });
+      return;
+    }
     ensureEmailConfiguration();
     const email = requiredText(request.body?.email, 'Email').toLowerCase();
     const result = await db.query(
@@ -425,10 +460,15 @@ app.get('/api/auth/me', async (request, response, next) => {
               u.email_verified, u.created_at
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = $1 AND s.expires_at > now() AND u.email_verified = TRUE`,
+       WHERE s.token_hash = $1 AND s.expires_at > now()`,
       [hashSessionToken(token)]
     );
     if (!result.rows.length) {
+      clearSessionCookie(response);
+      response.json(null);
+      return;
+    }
+    if (emailVerificationRequired && !result.rows[0].email_verified) {
       clearSessionCookie(response);
       response.json(null);
       return;
@@ -455,7 +495,11 @@ app.post('/api/auth/logout', async (request, response, next) => {
 app.get('/api/health', async (_request, response, next) => {
   try {
     await db.query('SELECT 1');
-    response.json({ status: 'ok', database: 'connected' });
+    response.json({
+      status: 'ok',
+      database: 'connected',
+      emailVerificationRequired
+    });
   } catch (error) {
     next(error);
   }

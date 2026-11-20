@@ -74,6 +74,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [initialAuthError, setInitialAuthError] = useState('');
+  const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
   const [activePage, setActivePage] = useState('overview');
   const [farms, setFarms] = useState([]);
   const [selectedFarmId, setSelectedFarmId] = useState('');
@@ -93,6 +94,8 @@ function App() {
     async function restoreSession() {
       const verificationToken = new URLSearchParams(window.location.hash.slice(1)).get('verify');
       try {
+        const serverStatus = await apiRequest('/api/health');
+        if (active) setEmailVerificationRequired(serverStatus.emailVerificationRequired);
         if (verificationToken) {
           window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
           const verifiedUser = await apiRequest('/api/auth/verify-email', {
@@ -265,6 +268,7 @@ function App() {
     return (
       <AuthPage
         initialError={error || initialAuthError}
+        emailVerificationRequired={emailVerificationRequired}
         onAuthenticated={(authenticatedUser) => {
           setInitialAuthError('');
           setError('');
@@ -403,7 +407,7 @@ function App() {
           ) : activePage === 'assistant' ? (
             <AssistantPage farm={selectedFarm} cycles={cropCycles} />
           ) : activePage === 'profile' ? (
-            <ProfilePage user={user} />
+            <ProfilePage user={user} emailVerificationRequired={emailVerificationRequired} />
           ) : (
             <SubscriptionPage subscription={user.subscription} />
           )}
@@ -959,7 +963,7 @@ function SubscriptionPage({ subscription }) {
   );
 }
 
-function ProfilePage({ user }) {
+function ProfilePage({ user, emailVerificationRequired }) {
   const createdDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString()
     : 'Not available';
@@ -999,7 +1003,13 @@ function ProfilePage({ user }) {
           </div>
           <div>
             <dt>Email verification</dt>
-            <dd>{user.emailVerified ? 'Verified' : 'Not verified'}</dd>
+            <dd>
+              {user.emailVerified
+                ? 'Verified'
+                : emailVerificationRequired
+                  ? 'Not verified'
+                  : 'Not checked in local development'}
+            </dd>
           </div>
         </dl>
       </section>
